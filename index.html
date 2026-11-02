@@ -302,7 +302,7 @@
   .cat-row { display: flex; gap: 6px; align-items: center; }
   .cat-add { display: flex; gap: 6px; }
   .btns { display: flex; flex-wrap: wrap; gap: 6px; }
-  .btn { font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 99px; background: var(--bg); border: 1px solid var(--line); cursor: pointer; transition: background .15s; }
+  .btn { white-space: nowrap; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 99px; background: var(--bg); border: 1px solid var(--line); cursor: pointer; transition: background .15s; }
   .btn:hover { background: var(--line); }
   .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
   .snap { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
@@ -451,6 +451,29 @@
     <div class="sheet-head">
       <h2>Einstellungen</h2>
       <button class="icon" data-close aria-label="Schließen">✕</button>
+    </div>
+
+    <div id="syncSection" style="display:grid;gap:10px" hidden>
+      <h3>Synchronisation</h3>
+      <div id="syncOut" style="display:grid;gap:8px">
+        <p class="hint" id="syncHint">Melde dich mit deiner E-Mail an, dann sind deine Einträge auf allen Geräten gleich. Du bekommst einen Anmelde-Link, ein Passwort gibt es nicht.</p>
+        <form class="cat-add" id="emailForm">
+          <input class="field" id="syncEmail" type="email" placeholder="E-Mail" autocomplete="email" required>
+          <button class="btn primary" type="submit">Link senden</button>
+        </form>
+        <form class="cat-add" id="codeForm" hidden>
+          <input class="field" id="syncCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Code aus der E-Mail" maxlength="10">
+          <button class="btn primary" type="submit">Anmelden</button>
+          <button class="btn" type="button" id="codeBack">Zurück</button>
+        </form>
+      </div>
+      <div id="syncIn" style="display:grid;gap:8px" hidden>
+        <p class="hint" id="syncStatus"></p>
+        <div class="btns">
+          <button class="btn" id="syncNow">Jetzt synchronisieren</button>
+          <button class="btn" id="signOut">Abmelden</button>
+        </div>
+      </div>
     </div>
 
     <h3>Darstellung</h3>
@@ -667,6 +690,7 @@ function load() {
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
   scheduleFolderBackup();
+  cloud.schedule();
 }
 
 // Änderung mit Rückgängig-Möglichkeit
@@ -1256,6 +1280,283 @@ $('importFile').addEventListener('change', async ev => {
   }
 });
 
+/* ---------- Synchronisation (Supabase) ---------- */
+
+// Öffentliche Projektdaten: der Schlüssel ist für den Browser gedacht, die Daten schützt Row Level Security
+const SUPABASE_URL = 'https://iveyuriozbqlkqjiqtcj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7ctcWRizyUhiuz_SRt34Gw_MX4bL1xY';
+
+const cloud = (() => {
+  const AUTH_KEY = 'ausgaben.auth', SYNC_KEY = 'ausgaben.sync';
+  const enabled = !!(SUPABASE_URL && SUPABASE_KEY);
+  const read = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+  const write = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  const emptySync = () => ({ cursor: null, synced: {}, cats: null });
+
+  let auth = read(AUTH_KEY);
+  let sync = read(SYNC_KEY) || emptySync();
+  let status = 'idle'; // idle | syncing | error | offline
+  let lastSync = null, timer, running = null, again = false, refreshing = null;
+
+  const setAuth = d => {
+    auth = {
+      access_token: d.access_token,
+      refresh_token: d.refresh_token,
+      expires_at: d.expires_at || Math.floor(Date.now() / 1000) + (d.expires_in || 3600),
+      user: { id: d.user?.id, email: d.user?.email },
+    };
+    write(AUTH_KEY, auth);
+  };
+
+  async function call(path, { method = 'GET', body, headers = {}, token = true } = {}) {
+    const h = { apikey: SUPABASE_KEY, 'Content-Type': 'application/json', ...headers };
+    if (token && auth) h.Authorization = 'Bearer ' + await accessToken();
+    const res = await fetch(SUPABASE_URL + path, { method, headers: h, body: body && JSON.stringify(body) });
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
+    if (!res.ok) { const err = new Error(data?.msg || data?.message || data?.error_description || res.statusText); err.status = res.status; throw err; }
+    return data;
+  }
+
+  async function accessToken() {
+    if (auth.expires_at - 60 > Date.now() / 1000) return auth.access_token;
+    refreshing ??= (async () => {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST', headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: auth.refresh_token }),
+        });
+        if (res.status === 400 || res.status === 401) { signOutLocal(); throw new Error('Sitzung abgelaufen'); }
+        if (!res.ok) throw new Error(res.statusText);
+        setAuth(await res.json());
+      } finally { refreshing = null; }
+    })();
+    await refreshing;
+    return auth.access_token;
+  }
+
+  function signOutLocal() {
+    auth = null; sync = emptySync();
+    write(AUTH_KEY, null); write(SYNC_KEY, null);
+    renderSync();
+  }
+
+  const entryJSON = e => JSON.stringify(e);
+  const isDirty = e => sync.synced[e.id] !== entryJSON(e);
+  const union = (a, b) => [...new Set([...(a || []), ...(b || [])])];
+
+  // Neues vom Server holen. Lokal noch nicht hochgeladene Änderungen gewinnen.
+  async function pull() {
+    let changed = false;
+    for (;;) {
+      // kleine Überlappung, damit nichts zwischen zwei Abfragen verloren geht
+      const since = sync.cursor && new Date(new Date(sync.cursor) - 10000).toISOString();
+      const rows = await call(`/rest/v1/entries?select=id,data,deleted,updated_at&order=updated_at.asc&limit=1000${since ? '&updated_at=gt.' + encodeURIComponent(since) : ''}`);
+      const byId = new Map(state.entries.map(e => [e.id, e]));
+      for (const r of rows) {
+        const local = byId.get(r.id);
+        const pendingLocal = local ? isDirty(local) : r.id in sync.synced;
+        if (!pendingLocal) {
+          const remote = r.deleted ? null : normalize({ entries: [r.data] }).entries[0];
+          if (local && !remote) state.entries = state.entries.filter(e => e.id !== r.id);
+          else if (local) Object.assign(local, remote);
+          else if (remote) state.entries.push(remote);
+          if (remote) sync.synced[r.id] = entryJSON(local || remote); else delete sync.synced[r.id];
+          if (local || remote) changed = true;
+        }
+        if (!sync.cursor || r.updated_at > sync.cursor) sync.cursor = r.updated_at;
+      }
+      if (rows.length < 1000) break;
+    }
+
+    const [row] = await call('/rest/v1/user_settings?select=cats');
+    if (row) {
+      const remote = JSON.stringify(row.cats);
+      if (sync.cats === null) {
+        // erste Anmeldung auf diesem Gerät: Kategorien zusammenführen
+        state.cats = { out: union(row.cats.out, state.cats.out), in: union(row.cats.in, state.cats.in) };
+        sync.cats = remote;
+        changed = true;
+      } else if (JSON.stringify(state.cats) === sync.cats && remote !== sync.cats) {
+        state.cats = { out: [...(row.cats.out || [])], in: [...(row.cats.in || [])] };
+        sync.cats = remote;
+        changed = true;
+      }
+    }
+    write(SYNC_KEY, sync);
+    if (changed) {
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+      render(); renderChips();
+    }
+  }
+
+  // Lokale Änderungen hochladen
+  async function push() {
+    const live = new Set(state.entries.map(e => e.id));
+    const up = state.entries.filter(isDirty).map(e => ({ id: e.id, data: e, deleted: false, json: entryJSON(e) }));
+    for (const id of Object.keys(sync.synced)) if (!live.has(id)) up.push({ id, data: {}, deleted: true });
+    for (let i = 0; i < up.length; i += 500) {
+      const chunk = up.slice(i, i + 500);
+      await call('/rest/v1/entries?on_conflict=user_id,id', {
+        method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: chunk.map(({ id, data, deleted }) => ({ id, data, deleted })),
+      });
+      for (const u of chunk) { if (u.deleted) delete sync.synced[u.id]; else sync.synced[u.id] = u.json; }
+      write(SYNC_KEY, sync);
+    }
+    const cats = JSON.stringify(state.cats);
+    if (cats !== sync.cats) {
+      await call('/rest/v1/user_settings?on_conflict=user_id', {
+        method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: { cats: state.cats },
+      });
+      sync.cats = cats;
+      write(SYNC_KEY, sync);
+    }
+  }
+
+  async function run() {
+    if (!enabled || !auth) return;
+    if (running) { again = true; return running; }
+    status = 'syncing'; renderSync();
+    running = (async () => {
+      try {
+        do { again = false; await pull(); await push(); } while (again);
+        status = 'idle'; lastSync = new Date();
+      } catch (err) {
+        status = navigator.onLine ? 'error' : 'offline';
+        console.warn('Sync:', err);
+      } finally {
+        running = null;
+        renderSync();
+      }
+    })();
+    return running;
+  }
+
+  // Anmeldung über einen Link aus der Mail (Fallback zum Code)
+  async function fromRedirect() {
+    if (!enabled || !/access_token=|error=/.test(location.hash)) return;
+    const d = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+    history.replaceState(null, '', location.pathname + location.search);
+    if (d.error) { toast(d.error_code === 'otp_expired' ? 'Der Link ist abgelaufen, bitte neu anfordern' : 'Anmeldung fehlgeschlagen'); return; }
+    try {
+      const user = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + d.access_token } }).then(r => r.json());
+      setAuth({ ...d, expires_at: +d.expires_at, expires_in: +d.expires_in, user });
+      sync = emptySync(); write(SYNC_KEY, sync);
+      sound.play('in');
+      toast('Angemeldet, Daten werden synchronisiert');
+    } catch {}
+  }
+
+  // Anmeldung oder Abmeldung in einem anderen Fenster (z. B. Link aus der Mail im Browser) übernehmen
+  function adoptStorage() {
+    const a = read(AUTH_KEY);
+    if (a?.refresh_token === auth?.refresh_token) return;
+    auth = a;
+    sync = (a && read(SYNC_KEY)) || emptySync();
+    state = load();
+    render(); renderChips(); renderSync();
+    run();
+  }
+
+  return {
+    enabled,
+    get user() { return auth?.user; },
+    get status() { return status; },
+    get lastSync() { return lastSync; },
+    schedule() { if (!auth) return; clearTimeout(timer); timer = setTimeout(run, 800); },
+    run,
+    fromRedirect,
+    adoptStorage,
+    sendCode: email => call('/auth/v1/otp?redirect_to=' + encodeURIComponent(location.origin + location.pathname), {
+      method: 'POST', token: false, body: { email, create_user: true },
+    }),
+    async verify(email, code) {
+      setAuth(await call('/auth/v1/verify', { method: 'POST', token: false, body: { type: 'email', email, token: code } }));
+      sync = emptySync(); write(SYNC_KEY, sync);
+      await run();
+    },
+    async signOut() {
+      try { await call('/auth/v1/logout', { method: 'POST' }); } catch {}
+      signOutLocal();
+    },
+  };
+})();
+
+let pendingEmail = '';
+
+function renderSync() {
+  $('syncSection').hidden = !cloud.enabled;
+  if (!cloud.enabled) return;
+  const user = cloud.user;
+  $('syncOut').hidden = !!user;
+  $('syncIn').hidden = !user;
+  $('codeForm').hidden = !pendingEmail;
+  $('emailForm').hidden = !!pendingEmail;
+  $('syncHint').innerHTML = pendingEmail
+    ? `Mail an <b>${esc(pendingEmail)}</b> ist unterwegs. Tippe auf den Link darin, danach bist du hier automatisch angemeldet. Steht in der Mail ein Code, kannst du ihn auch unten eingeben.`
+    : 'Melde dich mit deiner E-Mail an, dann sind deine Einträge auf allen Geräten gleich. Du bekommst einen Anmelde-Link, ein Passwort gibt es nicht.';
+  if (!user) return;
+  const t = cloud.lastSync?.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  const s = {
+    syncing: 'Wird synchronisiert …',
+    idle: t ? `Synchronisiert um ${t}.` : 'Bereit.',
+    offline: 'Offline. Änderungen werden hochgeladen, sobald du wieder online bist.',
+    error: 'Die letzte Synchronisation ist fehlgeschlagen. Sie wird automatisch erneut versucht.',
+  }[cloud.status];
+  $('syncStatus').innerHTML = `Angemeldet als <b>${esc(user.email || '')}</b>. ${s}`;
+}
+
+$('emailForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const email = $('syncEmail').value.trim();
+  if (!email) return;
+  const btn = ev.submitter; btn.disabled = true;
+  try {
+    await cloud.sendCode(email);
+    pendingEmail = email;
+    sound.play('toggle');
+    renderSync();
+    $('syncCode').focus();
+    toast('Mail wurde verschickt');
+  } catch (err) {
+    sound.play('error');
+    toast(err.status === 429 ? 'Zu viele Versuche, bitte später erneut' : 'Mail konnte nicht gesendet werden');
+  } finally { btn.disabled = false; }
+});
+
+$('codeForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const code = $('syncCode').value.replace(/\s/g, '');
+  if (!code) return;
+  const btn = ev.submitter; btn.disabled = true;
+  try {
+    await cloud.verify(pendingEmail, code);
+    pendingEmail = '';
+    $('syncCode').value = '';
+    sound.play('in');
+    toast('Angemeldet, Daten werden synchronisiert');
+  } catch {
+    sound.play('error');
+    replay($('codeForm'), 'shake');
+    toast('Code ist falsch oder abgelaufen');
+  } finally { btn.disabled = false; renderSync(); }
+});
+
+$('codeBack').addEventListener('click', () => { pendingEmail = ''; renderSync(); });
+$('syncNow').addEventListener('click', async () => { sound.play('tap'); await cloud.run(); if (cloud.status === 'idle') toast('Synchronisiert'); });
+$('signOut').addEventListener('click', async () => {
+  sound.play('close');
+  await cloud.signOut();
+  toast('Abgemeldet. Die Einträge bleiben auf diesem Gerät.');
+});
+
+// Abgleich beim Öffnen, beim Zurückkehren in die App, wenn das Netz wieder da ist und regelmäßig im Vordergrund
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { cloud.adoptStorage(); cloud.run(); } });
+addEventListener('storage', ev => { if (ev.key === 'ausgaben.auth') cloud.adoptStorage(); });
+addEventListener('online', () => cloud.run());
+setInterval(() => { if (!document.hidden) cloud.run(); }, 30000);
+
 /* ---------- Analyse ---------- */
 
 let period = 'month';
@@ -1391,7 +1692,7 @@ addEventListener('resize', () => { if ($('analysis').open) renderAnalysis(); });
 /* ---------- Einstellungen ---------- */
 
 $('settingsBtn').addEventListener('click', () => {
-  renderTheme(); renderSound(); renderCats(); renderBackup();
+  renderTheme(); renderSound(); renderSync(); renderCats(); renderBackup();
   openDialog($('settings'));
 });
 document.querySelectorAll('dialog').forEach(d => {
@@ -1408,6 +1709,8 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) naviga
 // Sicherung beim Öffnen: erst nach dem ersten Zeichnen, damit nichts bremst
 setTimeout(async () => {
   snapshot();
+  await cloud.fromRedirect();
+  cloud.run();
   if (!folderSupported) return;
   try { folder = await kv.get('folder') || null; } catch {}
   if (folder) await backupToFolder(); else renderBackup();

@@ -6,3 +6,7 @@ Thumbs.db
 
 # Local Netlify folder
 .netlify
+
+# Lokale Zugangsdaten
+.supabase-db-password.txt
+supabase/.temp/
