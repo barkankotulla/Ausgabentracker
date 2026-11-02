@@ -1449,10 +1449,11 @@ const cloud = (() => {
   async function pullTable(t) {
     const s = t.state();
     let changed = false;
-    for (;;) {
-      // kleine Überlappung, damit nichts zwischen zwei Abfragen verloren geht
-      const since = s.cursor && new Date(new Date(s.cursor) - 10000).toISOString();
-      const rows = await call(`/rest/v1/${t.name}?select=id,data,deleted,updated_at&order=updated_at.asc&limit=1000${since ? '&updated_at=gt.' + encodeURIComponent(since) : ''}`);
+    // kleine Überlappung, damit nichts zwischen zwei Abgleichen verloren geht; innerhalb eines Abgleichs
+    // seitenweise weiter, sonst liefert jede Seite dieselben Zeilen, wenn viele in einem Moment geschrieben wurden
+    const since = s.cursor && new Date(new Date(s.cursor) - 10000).toISOString();
+    for (let offset = 0; ; offset += 1000) {
+      const rows = await call(`/rest/v1/${t.name}?select=id,data,deleted,updated_at&order=updated_at.asc,id.asc&limit=1000&offset=${offset}${since ? '&updated_at=gt.' + encodeURIComponent(since) : ''}`);
       const items = t.items();
       for (const r of rows) {
         const local = items.get(r.id);
