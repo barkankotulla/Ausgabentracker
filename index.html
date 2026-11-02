@@ -765,11 +765,12 @@ function save() {
 
 // Änderung mit Rückgängig-Möglichkeit
 function withUndo(msg, fn, reviveId) {
-  const prev = JSON.stringify(state);
+  const prev = JSON.stringify(state), prevBilanz = JSON.stringify(bilanz);
   fn();
   save(); render(); renderChips();
   toast(msg, () => {
     state = normalize(JSON.parse(prev));
+    if (JSON.stringify(bilanz) !== prevBilanz) { bilanz = normBilanz(JSON.parse(prevBilanz)); saveBilanz(); }
     justAdded = reviveId;
     sound.play('undo');
     save(); render(); renderChips();
@@ -1212,10 +1213,13 @@ function readSnapshots() {
   try { return JSON.parse(localStorage.getItem(BACKUP_KEY)) || []; } catch { return []; }
 }
 
+// Alles, was gesichert wird: Einträge, Kategorien und Bilanz
+const backupData = () => ({ ...state, bilanz });
+
 function snapshot() {
-  if (!state.entries.length) return;
+  if (!state.entries.length && !bilanz.accounts.length) return;
   const list = readSnapshots();
-  const data = JSON.stringify(state);
+  const data = JSON.stringify(backupData());
   if (list[0]?.data === data) return;
   list.unshift({ at: Date.now(), data });
   try { localStorage.setItem(BACKUP_KEY, JSON.stringify(list.slice(0, MAX_SNAPSHOTS))); } catch {}
@@ -1255,7 +1259,7 @@ async function backupToFolder(ask) {
     if (perm !== 'granted') { folderState = 'perm'; return renderBackup(); }
     const file = await folder.getFileHandle(`ausgaben-${iso(new Date())}.json`, { create: true });
     const w = await file.createWritable();
-    await w.write(JSON.stringify(state, null, 1));
+    await w.write(JSON.stringify(backupData(), null, 1));
     await w.close();
     folderState = 'ok';
     lastFolderBackup = new Date();
@@ -1287,8 +1291,8 @@ function renderBackup() {
   const snaps = readSnapshots();
   $('snapList').innerHTML = snaps.length
     ? snaps.map((s, i) => {
-        let n = 0; try { n = JSON.parse(s.data).entries.length; } catch {}
-        return `<div class="snap"><span>${stampFmt.format(s.at)}<small>${n} Einträge</small></span><button data-snap="${i}">Wiederherstellen</button></div>`;
+        let n = 0, k = 0; try { const d = JSON.parse(s.data); n = d.entries.length; k = d.bilanz?.accounts?.length || 0; } catch {}
+        return `<div class="snap"><span>${stampFmt.format(s.at)}<small>${n} Einträge${k ? ` · ${k} Konten` : ''}</small></span><button data-snap="${i}">Wiederherstellen</button></div>`;
       }).join('')
     : '<p class="hint">Noch keine Schnappschüsse.</p>';
 }
@@ -1297,7 +1301,8 @@ function restore(data, msg) {
   const next = normalize(data);
   sound.play('in');
   snapshot();
-  withUndo(msg, () => { state = next; });
+  // ältere Sicherungen ohne Bilanz lassen die aktuelle Bilanz stehen
+  withUndo(msg, () => { state = next; if (data.bilanz) { bilanz = normBilanz(data.bilanz); saveBilanz(); } });
   resetForm();
   renderBackup(); renderCats();
 }
@@ -1324,7 +1329,7 @@ $('backupNow').addEventListener('click', async () => {
 
 $('exportBtn').addEventListener('click', () => {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 1)], { type: 'application/json' }));
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(backupData(), null, 1)], { type: 'application/json' }));
   a.download = `ausgaben-${iso(new Date())}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -1361,7 +1366,8 @@ const cloud = (() => {
   const enabled = !!(SUPABASE_URL && SUPABASE_KEY);
   const read = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
   const write = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-  const emptySync = () => ({ cursor: null, synced: {}, cats: null });
+  // cursor/synced auf oberster Ebene gehören zur Tabelle entries (so schon in v1 gespeichert)
+  const emptySync = () => ({ cursor: null, synced: {}, cats: null, bilanz: { cursor: null, synced: {} } });
 
   let auth = read(AUTH_KEY);
   let sync = read(SYNC_KEY) || emptySync();
@@ -1411,34 +1417,63 @@ const cloud = (() => {
     renderSync();
   }
 
-  const entryJSON = e => JSON.stringify(e);
-  const isDirty = e => sync.synced[e.id] !== entryJSON(e);
   const union = (a, b) => [...new Set([...(a || []), ...(b || [])])];
 
+  // Tabellen mit einer Zeile pro Element: items() = lokaler Stand (id → Daten),
+  // set(id, daten|null) übernimmt ein Element vom Server und gibt den neuen lokalen Stand zurück
+  const TABLES = [
+    {
+      name: 'entries',
+      state: () => sync,
+      items: () => new Map(state.entries.map(e => [e.id, e])),
+      set(id, data) {
+        const local = state.entries.find(e => e.id === id);
+        const remote = data && normalize({ entries: [data] }).entries[0];
+        if (!remote) { if (local) state.entries = state.entries.filter(e => e.id !== id); return; }
+        if (local) return Object.assign(local, remote);
+        state.entries.push(remote);
+        return remote;
+      },
+      persist() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} render(); renderChips(); },
+    },
+    {
+      name: 'bilanz',
+      state: () => sync.bilanz ||= { cursor: null, synced: {} },
+      items: bilanzItems,
+      set: bilanzSet,
+      persist() { try { localStorage.setItem(BILANZ_KEY, JSON.stringify(bilanz)); } catch {} if ($('bilanz').open) renderBilanz(); },
+    },
+  ];
+
   // Neues vom Server holen. Lokal noch nicht hochgeladene Änderungen gewinnen.
-  async function pull() {
+  async function pullTable(t) {
+    const s = t.state();
     let changed = false;
     for (;;) {
       // kleine Überlappung, damit nichts zwischen zwei Abfragen verloren geht
-      const since = sync.cursor && new Date(new Date(sync.cursor) - 10000).toISOString();
-      const rows = await call(`/rest/v1/entries?select=id,data,deleted,updated_at&order=updated_at.asc&limit=1000${since ? '&updated_at=gt.' + encodeURIComponent(since) : ''}`);
-      const byId = new Map(state.entries.map(e => [e.id, e]));
+      const since = s.cursor && new Date(new Date(s.cursor) - 10000).toISOString();
+      const rows = await call(`/rest/v1/${t.name}?select=id,data,deleted,updated_at&order=updated_at.asc&limit=1000${since ? '&updated_at=gt.' + encodeURIComponent(since) : ''}`);
+      const items = t.items();
       for (const r of rows) {
-        const local = byId.get(r.id);
-        const pendingLocal = local ? isDirty(local) : r.id in sync.synced;
+        const local = items.get(r.id);
+        const pendingLocal = local !== undefined ? s.synced[r.id] !== JSON.stringify(local) : r.id in s.synced;
         if (!pendingLocal) {
-          const remote = r.deleted ? null : normalize({ entries: [r.data] }).entries[0];
-          if (local && !remote) state.entries = state.entries.filter(e => e.id !== r.id);
-          else if (local) Object.assign(local, remote);
-          else if (remote) state.entries.push(remote);
-          if (remote) sync.synced[r.id] = entryJSON(local || remote); else delete sync.synced[r.id];
-          if (local || remote) changed = true;
+          const now = t.set(r.id, r.deleted ? null : r.data);
+          if (now !== undefined) { s.synced[r.id] = JSON.stringify(now); items.set(r.id, now); }
+          else { delete s.synced[r.id]; items.delete(r.id); }
+          if (local !== undefined || now !== undefined) changed = true;
         }
-        if (!sync.cursor || r.updated_at > sync.cursor) sync.cursor = r.updated_at;
+        if (!s.cursor || r.updated_at > s.cursor) s.cursor = r.updated_at;
       }
       if (rows.length < 1000) break;
     }
+    write(SYNC_KEY, sync);
+    if (changed) t.persist();
+  }
 
+  async function pull() {
+    for (const t of TABLES) await pullTable(t);
+    let changed = false;
     const [row] = await call('/rest/v1/user_settings?select=cats');
     if (row) {
       const remote = JSON.stringify(row.cats);
@@ -1461,19 +1496,23 @@ const cloud = (() => {
   }
 
   // Lokale Änderungen hochladen
-  async function push() {
-    const live = new Set(state.entries.map(e => e.id));
-    const up = state.entries.filter(isDirty).map(e => ({ id: e.id, data: e, deleted: false, json: entryJSON(e) }));
-    for (const id of Object.keys(sync.synced)) if (!live.has(id)) up.push({ id, data: {}, deleted: true });
+  async function pushTable(t) {
+    const s = t.state(), items = t.items(), up = [];
+    for (const [id, data] of items) { const json = JSON.stringify(data); if (s.synced[id] !== json) up.push({ id, data, deleted: false, json }); }
+    for (const id of Object.keys(s.synced)) if (!items.has(id)) up.push({ id, data: {}, deleted: true });
     for (let i = 0; i < up.length; i += 500) {
       const chunk = up.slice(i, i + 500);
-      await call('/rest/v1/entries?on_conflict=user_id,id', {
+      await call(`/rest/v1/${t.name}?on_conflict=user_id,id`, {
         method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
         body: chunk.map(({ id, data, deleted }) => ({ id, data, deleted })),
       });
-      for (const u of chunk) { if (u.deleted) delete sync.synced[u.id]; else sync.synced[u.id] = u.json; }
+      for (const u of chunk) { if (u.deleted) delete s.synced[u.id]; else s.synced[u.id] = u.json; }
       write(SYNC_KEY, sync);
     }
+  }
+
+  async function push() {
+    for (const t of TABLES) await pushTable(t);
     const cats = JSON.stringify(state.cats);
     if (cats !== sync.cats) {
       await call('/rest/v1/user_settings?on_conflict=user_id', {
@@ -1525,6 +1564,7 @@ const cloud = (() => {
     auth = a;
     sync = (a && read(SYNC_KEY)) || emptySync();
     state = load();
+    bilanz = loadBilanz();
     render(); renderChips(); renderSync();
     run();
   }
@@ -1768,11 +1808,43 @@ let bilanz = loadBilanz();
 let bView = new Date(view);
 let bConfirm = null;
 
-function loadBilanz() {
-  try { const b = JSON.parse(localStorage.getItem(BILANZ_KEY)); if (b) return { accounts: b.accounts || [], values: b.values || {} }; } catch {}
-  return { accounts: [], values: {} };
+function normBilanz(b) {
+  return { accounts: (b?.accounts || []).map(a => ({ id: a.id, name: a.name, kind: a.kind })), values: { ...b?.values } };
 }
-const saveBilanz = () => { try { localStorage.setItem(BILANZ_KEY, JSON.stringify(bilanz)); } catch {} };
+function loadBilanz() {
+  try { return normBilanz(JSON.parse(localStorage.getItem(BILANZ_KEY))); } catch { return normBilanz(); }
+}
+function saveBilanz() {
+  try { localStorage.setItem(BILANZ_KEY, JSON.stringify(bilanz)); } catch {}
+  scheduleFolderBackup();
+  cloud.schedule();
+}
+
+// Für den Sync als flache Liste: "a:<konto>" = Konto, "v:<YYYY-MM>:<konto>" = Stand
+function bilanzItems() {
+  const items = new Map();
+  for (const a of bilanz.accounts) items.set('a:' + a.id, { name: a.name, kind: a.kind });
+  for (const [k, vals] of Object.entries(bilanz.values)) for (const [id, v] of Object.entries(vals)) items.set(`v:${k}:${id}`, v);
+  return items;
+}
+
+// Ein Element vom Server übernehmen (null = gelöscht); gibt den neuen lokalen Stand zurück
+function bilanzSet(key, data) {
+  const [t, a, b] = key.split(':');
+  if (t === 'a') {
+    const acc = bilanz.accounts.find(x => x.id === a);
+    if (data == null) { bilanz.accounts = bilanz.accounts.filter(x => x.id !== a); return; }
+    if (acc) Object.assign(acc, { name: data.name, kind: data.kind });
+    else bilanz.accounts.push({ id: a, name: data.name, kind: data.kind });
+    return { name: data.name, kind: data.kind };
+  }
+  if (data == null || typeof data !== 'number') {
+    if (bilanz.values[a]) { delete bilanz.values[a][b]; if (!Object.keys(bilanz.values[a]).length) delete bilanz.values[a]; }
+    return;
+  }
+  (bilanz.values[a] ||= {})[b] = data;
+  return data;
+}
 
 const mkey = (y, m) => { const d = new Date(y, m, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
 const money = v => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
