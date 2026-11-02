@@ -199,6 +199,36 @@
   .cbar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--bg); overflow: hidden; }
   .cbar i { display: block; height: 100%; border-radius: 3px; }
 
+  /* Bilanz */
+  #bilanz { width: min(560px, calc(100% - 32px)); }
+  #bilanz .sheet, #bGroups { grid-template-columns: minmax(0, 1fr); }
+  #bilanz .month { margin-top: 0; }
+  #bilanz .balance { margin: 4px 0 0; font-size: 40px; }
+  .delta { text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 18px; }
+  .delta.pos { color: var(--in); }
+  .delta.neg { color: var(--out); }
+  #bCopy { justify-self: center; }
+  .bgroup { --tone: var(--in); background: var(--bg); border-radius: 12px; padding: 2px 2px 2px 12px; }
+  .bgroup.debt { --tone: var(--out); }
+  .bhead { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 10px 8px 0; font-size: 12px; font-weight: 600; color: var(--tone); text-transform: uppercase; letter-spacing: .06em; }
+  .bhead b { font-size: 15px; font-weight: 700; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .brow { display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--line); min-height: 44px; }
+  .brow input, .badd input { border: 0; background: none; outline: none; min-width: 0; font-size: 14px; padding: 9px 0; }
+  .bname { flex: 1; font-weight: 600; }
+  .bval { width: 7em; flex: none; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--tone); }
+  @supports (field-sizing: content) { .bval { width: auto; field-sizing: content; min-width: 3.5em; } }
+  .bval::placeholder { color: var(--muted); font-weight: 500; opacity: .7; }
+  .brow .del.sure { width: auto; padding: 0 12px; border-radius: 99px; font-size: 13px; font-weight: 600; background: var(--out); color: #fff; opacity: 1; }
+  .badd { border-top: 1px solid var(--line); }
+  .badd input { width: 100%; }
+  .badd input::placeholder { color: var(--muted); }
+  .legend i.dash { height: 0; border-radius: 0; border-top: 2px dashed var(--out-chart); opacity: .6; vertical-align: 3px; }
+  .chart .net { fill: none; stroke: var(--in-chart); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+  .chart .trend { fill: none; stroke: var(--out-chart); stroke-opacity: .5; stroke-width: 1.5; stroke-dasharray: 5 5; }
+  .chart .dot { fill: var(--surface); stroke: var(--in-chart); stroke-width: 2; transition: r .15s; }
+  .chart .dot.active { fill: var(--in-chart); r: 6px; }
+  .chart .zero { stroke: var(--muted); stroke-opacity: .6; }
+
   /* Toast */
   .toast {
     position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
@@ -223,7 +253,7 @@
   }
   /* Touch: 16px verhindert das automatische Hineinzoomen beim Antippen von Feldern */
   @media (pointer: coarse) {
-    .field, .inline input, .inline select { font-size: 16px; }
+    .field, .inline input, .inline select, .brow input, .badd input { font-size: 16px; }
     .keypad button { height: 48px; }
     .del { width: 40px; height: 40px; }
   }
@@ -280,6 +310,11 @@
   @keyframes grow { from { transform: scaleY(0); } }
   .cbar i { animation: widen .7s var(--ease) backwards; }
   @keyframes widen { from { width: 0; } }
+  .chart path.net { transform: none; stroke-dasharray: 1; animation: draw 1s var(--ease) backwards; }
+  .chart path.trend { transform: none; animation: fadeIn .6s .5s backwards; }
+  .chart .dot { animation: fadeIn .3s backwards; animation-delay: calc(var(--d) * 70ms + 150ms); }
+  @keyframes draw { from { stroke-dashoffset: 1; } }
+  .chart.still * { animation: none !important; }
 
   .no-tr, .no-tr * { transition: none !important; }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
@@ -318,6 +353,9 @@
     <span class="spacer" id="spacer"></span>
     <button class="icon" id="analysisBtn" aria-label="Analyse">
       <svg viewBox="0 0 24 24"><path d="M6 20v-8M12 20V5M18 20v-5"/></svg>
+    </button>
+    <button class="icon" id="bilanzBtn" aria-label="Bilanz">
+      <svg viewBox="0 0 24 24"><path d="M12 4v16M8 20h8M5 7h14M5 7l-2.5 6a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z"/></svg>
     </button>
     <button class="icon" id="themeBtn" aria-label="Hell / Dunkel"></button>
     <button class="icon" id="settingsBtn" aria-label="Einstellungen">
@@ -443,6 +481,38 @@
     <div id="catOut"></div>
     <h3>Einnahmen nach Kategorie</h3>
     <div id="catIn"></div>
+  </div>
+</dialog>
+
+<dialog id="bilanz">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2>Bilanz</h2>
+      <button class="icon" data-close aria-label="Schließen">✕</button>
+    </div>
+    <div class="month">
+      <button class="icon" id="bPrev" aria-label="Vorheriger Monat">‹</button>
+      <span id="bMonth"></span>
+      <button class="icon" id="bNext" aria-label="Nächster Monat">›</button>
+    </div>
+    <div class="balance" id="bNet">0,00 €</div>
+    <p class="delta" id="bDelta"></p>
+    <button class="btn" id="bCopy" hidden>Stand vom Vormonat übernehmen</button>
+    <div id="bGroups" style="display:grid;gap:8px"></div>
+
+    <h3 id="bYear"></h3>
+    <div class="tiles">
+      <div class="tile"><span>Zuwachs</span><b id="bGrow"></b></div>
+      <div class="tile"><span>Ø pro Monat</span><b id="bAvg"></b></div>
+      <div class="tile"><span>Ø Cashflow</span><b id="bCash"></b></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--in-chart)"></i>Nettovermögen</span>
+      <span><i class="dash"></i>Trend</span>
+      <button type="button" id="bTableToggle">Tabelle</button>
+    </div>
+    <div class="chart" id="bChart"></div>
+    <div id="bTable" hidden></div>
   </div>
 </dialog>
 
@@ -1621,7 +1691,7 @@ function catList(map, t) {
 }
 
 const niceStep = x => { const p = 10 ** Math.floor(Math.log10(x)), f = x / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; };
-const axisNum = v => v >= 1000 ? fmtNum(v / 1000) + 'k' : fmtNum(v);
+const axisNum = v => Math.abs(v) >= 1000 ? fmtNum(v / 1000) + 'k' : fmtNum(v);
 const barPath = (x, y, w, y0) => { const r = Math.min(4, y0 - y, w / 2); return `M${x},${y0}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y0}Z`; };
 
 function renderChart(data) {
@@ -1688,6 +1758,260 @@ $('tableToggle').addEventListener('click', () => {
   $('tableToggle').textContent = show ? 'Diagramm' : 'Tabelle';
 });
 addEventListener('resize', () => { if ($('analysis').open) renderAnalysis(); });
+
+/* ---------- Bilanz ---------- */
+
+// Monatlicher Vermögensstand pro Konto, getrennt von den Einträgen (Prototyp: nur lokal, kein Sync)
+const BILANZ_KEY = 'ausgaben.bilanz';
+const KINDS = { asset: ['Vermögen', 'Vermögenswert hinzufügen'], debt: ['Schulden', 'Verbindlichkeit hinzufügen'] };
+let bilanz = loadBilanz();
+let bView = new Date(view);
+let bConfirm = null;
+
+function loadBilanz() {
+  try { const b = JSON.parse(localStorage.getItem(BILANZ_KEY)); if (b) return { accounts: b.accounts || [], values: b.values || {} }; } catch {}
+  return { accounts: [], values: {} };
+}
+const saveBilanz = () => { try { localStorage.setItem(BILANZ_KEY, JSON.stringify(bilanz)); } catch {} };
+
+const mkey = (y, m) => { const d = new Date(y, m, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+const money = v => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// Summen eines Monats, null wenn noch kein Stand eingetragen ist
+function totals(k) {
+  const vals = bilanz.values[k];
+  if (!vals) return null;
+  let a = 0, d = 0;
+  for (const acc of bilanz.accounts) {
+    const v = vals[acc.id];
+    if (v == null) continue;
+    if (acc.kind === 'debt') d += v; else a += v;
+  }
+  return { a, d, net: a - d };
+}
+
+// Letzter bekannter Stand eines Kontos vor dem Monat k (als Vorschlag)
+function lastKnown(id, k) {
+  let v;
+  for (const kk of Object.keys(bilanz.values).sort()) { if (kk >= k) break; if (bilanz.values[kk][id] != null) v = bilanz.values[kk][id]; }
+  return v;
+}
+
+function renderBilanz(slide) {
+  const k = mkey(bView.getFullYear(), bView.getMonth());
+  $('bMonth').textContent = monthFmt.format(bView);
+  if (slide) { replay($('bMonth'), 'slide-' + slide); replay($('bGroups'), 'slide-' + slide); }
+  $('bGroups').innerHTML = Object.entries(KINDS).map(([kind, [label, add]]) => `
+    <div class="bgroup ${kind}">
+      <div class="bhead"><span>${label}</span><b data-sum="${kind}"></b></div>
+      ${bilanz.accounts.filter(a => a.kind === kind).map(a => {
+        const v = bilanz.values[k]?.[a.id], last = lastKnown(a.id, k);
+        return `<div class="brow">
+          <input class="bname" value="${esc(a.name)}" data-name="${a.id}" maxlength="40" aria-label="Name">
+          <input class="bval" inputmode="decimal" data-val="${a.id}" value="${v == null ? '' : money(v)}" placeholder="${last == null ? '0,00' : money(last)}" aria-label="Stand">
+          <button type="button" class="del${bConfirm === a.id ? ' sure' : ''}" data-rm="${a.id}" aria-label="Konto löschen">${bConfirm === a.id ? 'Löschen' : '×'}</button>
+        </div>`;
+      }).join('')}
+      <form class="badd" data-kind="${kind}"><input placeholder="+ ${add}" maxlength="40"></form>
+    </div>`).join('');
+  renderBilanzSums(true);
+}
+
+// Alles, was sich beim Eintippen eines Wertes ändert (ohne die Felder neu zu zeichnen)
+function renderBilanzSums(animate) {
+  const y = bView.getFullYear(), m = bView.getMonth(), k = mkey(y, m);
+  const t = totals(k), p = totals(mkey(y, m - 1));
+  tween($('bNet'), t ? t.net : 0);
+  $('bNet').className = 'balance' + (!t ? '' : t.net > 0.004 ? ' pos' : t.net < -0.004 ? ' neg' : '');
+  const diff = t && p ? t.net - p.net : null;
+  $('bDelta').className = 'delta' + (diff > 0.004 ? ' pos' : diff < -0.004 ? ' neg' : '');
+  $('bDelta').textContent = !t ? 'Noch kein Stand für diesen Monat'
+    : diff == null ? 'Nettovermögen'
+    : `${diff >= 0 ? '+' : '−'}${eur.format(Math.abs(diff))} zum Vormonat`;
+  $('bCopy').hidden = !!t || !bilanz.accounts.some(a => lastKnown(a.id, k) != null);
+  document.querySelectorAll('[data-sum]').forEach(el => { el.textContent = eur.format(t ? t[el.dataset.sum === 'debt' ? 'd' : 'a'] : 0); });
+
+  // Jahresverlauf
+  const data = Array.from({ length: 12 }, (_, i) => ({ y, m: i, t: totals(mkey(y, i)) }));
+  const pts = data.filter(d => d.t);
+  $('bYear').textContent = `Verlauf ${y}`;
+  const grow = pts.length > 1 ? pts[pts.length - 1].t.net - pts[0].t.net : 0;
+  $('bGrow').textContent = pts.length > 1 ? (grow >= 0 ? '+' : '−') + eur.format(Math.abs(grow)) : '–';
+  $('bAvg').textContent = pts.length > 1 ? eur.format(grow / (pts[pts.length - 1].m - pts[0].m)) : '–';
+  // Ø Cashflow aus den Einträgen: Monate des Jahres bis heute, in denen etwas gebucht ist
+  const now = new Date();
+  const flows = data.filter(d => new Date(d.y, d.m, 1) <= now).map(d => sumMonth(d.y, d.m)).filter(s => s.in || s.out);
+  $('bCash').textContent = flows.length ? eur.format(flows.reduce((s, f) => s + f.in - f.out, 0) / flows.length) : '–';
+
+  renderNetChart(data, animate);
+  $('bTable').innerHTML = `<table class="months"><thead><tr><th>Monat</th><th>Vermögen</th><th>Schulden</th><th>Netto</th></tr></thead><tbody>${
+    data.map(d => `<tr><td>${shortMonth(d.y, d.m)} ${d.y}</td>${d.t ? `<td>${eur.format(d.t.a)}</td><td>${eur.format(d.t.d)}</td><td><b>${eur.format(d.t.net)}</b></td>` : '<td>–</td><td>–</td><td>–</td>'}</tr>`).join('')
+  }</tbody></table>`;
+}
+
+function renderNetChart(data, animate) {
+  const el = $('bChart');
+  el.classList.toggle('still', !animate);
+  const pts = data.map((d, i) => ({ ...d, i })).filter(d => d.t);
+  if (!pts.length) { el.innerHTML = '<p class="hint" style="text-align:center;padding:28px 0">Noch kein Stand in diesem Jahr.</p>'; return; }
+
+  // Trendlinie (lineare Regression) über das ganze Jahr
+  let trend = null;
+  if (pts.length > 1) {
+    const n = pts.length, sx = pts.reduce((s, p) => s + p.i, 0), sy = pts.reduce((s, p) => s + p.t.net, 0);
+    const sxx = pts.reduce((s, p) => s + p.i * p.i, 0), sxy = pts.reduce((s, p) => s + p.i * p.t.net, 0);
+    const b = (n * sxy - sx * sy) / (n * sxx - sx * sx), a = (sy - b * sx) / n;
+    trend = [a, a + b * 11];
+  }
+
+  const W = el.clientWidth || 480, H = 200, padL = 38, padT = 10, padB = 24;
+  const plotW = W - padL, plotH = H - padT - padB;
+  const all = [0, ...pts.map(p => p.t.net), ...(trend || [])];
+  const step = niceStep((Math.max(...all) - Math.min(...all)) / 3 || 1);
+  const lo = Math.floor(Math.min(...all) / step) * step, hi = Math.max(Math.ceil(Math.max(...all) / step) * step, lo + step);
+  const yS = v => padT + plotH - (v - lo) / (hi - lo) * plotH;
+  const gw = plotW / data.length, xS = i => padL + gw * (i + 0.5);
+  const showAll = W >= 420;
+
+  let svg = '';
+  for (let t = lo; t <= hi + 1e-9; t += step) {
+    svg += `<line class="${Math.abs(t) < 1e-9 ? 'zero' : 'grid'}" x1="${padL}" x2="${W}" y1="${yS(t)}" y2="${yS(t)}"/><text x="${padL - 8}" y="${yS(t) + 4}" text-anchor="end">${axisNum(t)}</text>`;
+  }
+  data.forEach((d, i) => {
+    const cur = d.m === bView.getMonth();
+    if (showAll || i % 2 === 0) svg += `<text class="${cur ? 'cur' : ''}" x="${xS(i)}" y="${H - 6}" text-anchor="middle">${shortMonth(d.y, d.m)}</text>`;
+  });
+  if (trend) svg += `<path class="trend" d="M${xS(0)},${yS(trend[0])}L${xS(11)},${yS(trend[1])}"/>`;
+  if (pts.length > 1) svg += `<path class="net" pathLength="1" d="${pts.map((p, j) => `${j ? 'L' : 'M'}${xS(p.i)},${yS(p.t.net)}`).join('')}"/>`;
+  pts.forEach((p, j) => { svg += `<circle class="dot" data-dot="${p.i}" cx="${xS(p.i)}" cy="${yS(p.t.net)}" r="4" style="--d:${j}"/>`; });
+  data.forEach((_, i) => { svg += `<rect class="hit" data-i="${i}" x="${padL + gw * i}" y="0" width="${gw}" height="${H}"/>`; });
+
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Nettovermögen pro Monat">${svg}</svg><div class="tip" hidden></div>`;
+
+  const tip = el.querySelector('.tip');
+  const hide = () => { tip.hidden = true; el.querySelectorAll('.dot.active').forEach(c => c.classList.remove('active')); };
+  el.onpointermove = el.onpointerdown = ev => {
+    const hit = ev.target.closest('[data-i]');
+    if (!hit) return hide();
+    const i = +hit.dataset.i, d = data[i];
+    el.querySelectorAll('.dot').forEach(c => c.classList.toggle('active', +c.dataset.dot === i));
+    tip.innerHTML = `<b>${monthFmt.format(new Date(d.y, d.m, 1))}</b>` + (d.t
+      ? `<i style="background:var(--in-chart)"></i>Vermögen<span>${eur.format(d.t.a)}</span><br>
+         <i style="background:var(--out-chart)"></i>Schulden<span>${eur.format(d.t.d)}</span><br>
+         Netto<span>${eur.format(d.t.net)}</span>`
+      : 'Kein Stand eingetragen');
+    tip.hidden = false;
+    const half = tip.offsetWidth / 2;
+    tip.style.left = Math.min(Math.max(xS(i), half), W - half) + 'px';
+  };
+  el.onpointerleave = hide;
+  // Antippen springt zum Monat
+  el.onclick = ev => {
+    const hit = ev.target.closest('[data-i]');
+    if (!hit || +hit.dataset.i === bView.getMonth()) return;
+    const dir = +hit.dataset.i > bView.getMonth() ? 'next' : 'prev';
+    bView = new Date(bView.getFullYear(), +hit.dataset.i, 1);
+    sound.play('swipe');
+    renderBilanz(dir);
+  };
+}
+
+function bilanzMonth(delta) {
+  bView = new Date(bView.getFullYear(), bView.getMonth() + delta, 1);
+  bConfirm = null;
+  sound.play('swipe');
+  renderBilanz(delta > 0 ? 'next' : 'prev');
+}
+
+$('bilanzBtn').addEventListener('click', () => {
+  bView = new Date(view.getFullYear(), view.getMonth(), 1);
+  bConfirm = null;
+  $('bNet')._v = 0; // beim Öffnen von 0 hochzählen
+  openDialog($('bilanz'));
+  renderBilanz();
+});
+$('bPrev').addEventListener('click', () => bilanzMonth(-1));
+$('bNext').addEventListener('click', () => bilanzMonth(1));
+
+$('bCopy').addEventListener('click', () => {
+  const k = mkey(bView.getFullYear(), bView.getMonth());
+  const vals = {};
+  for (const a of bilanz.accounts) { const v = lastKnown(a.id, k); if (v != null) vals[a.id] = v; }
+  bilanz.values[k] = vals;
+  saveBilanz();
+  sound.play('in');
+  renderBilanz();
+});
+
+$('bGroups').addEventListener('change', ev => {
+  const k = mkey(bView.getFullYear(), bView.getMonth());
+  const inp = ev.target;
+  if (inp.dataset.name) {
+    const acc = bilanz.accounts.find(a => a.id === inp.dataset.name);
+    const nu = inp.value.trim();
+    if (nu) { acc.name = nu; saveBilanz(); } else inp.value = acc.name;
+    return;
+  }
+  if (!inp.dataset.val) return;
+  const id = inp.dataset.val, raw = inp.value.trim();
+  if (!raw) {
+    if (bilanz.values[k]) { delete bilanz.values[k][id]; if (!Object.keys(bilanz.values[k]).length) delete bilanz.values[k]; }
+  } else {
+    const r = calc(raw);
+    if (isNaN(r)) { sound.play('error'); replay(inp, 'shake'); inp.value = bilanz.values[k]?.[id] != null ? money(bilanz.values[k][id]) : ''; return; }
+    const acc = bilanz.accounts.find(a => a.id === id);
+    const v = Math.round((acc.kind === 'debt' ? Math.abs(r) : r) * 100) / 100;
+    (bilanz.values[k] ||= {})[id] = v;
+    inp.value = money(v);
+  }
+  saveBilanz();
+  renderBilanzSums(false);
+});
+
+$('bGroups').addEventListener('focusin', ev => { if (ev.target.dataset.val) ev.target.select(); });
+// Enter springt zum nächsten Betrag – schnelles Eintragen am Monatsanfang
+$('bGroups').addEventListener('keydown', ev => {
+  if (ev.key !== 'Enter' || !ev.target.dataset.val) return;
+  ev.preventDefault();
+  const vals = [...$('bGroups').querySelectorAll('[data-val]')];
+  const next = vals[vals.indexOf(ev.target) + 1];
+  if (next) next.focus(); else ev.target.blur();
+  sound.play('key');
+});
+
+$('bGroups').addEventListener('submit', ev => {
+  ev.preventDefault();
+  const f = ev.target, name = f.querySelector('input').value.trim();
+  if (!name) return;
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  bilanz.accounts.push({ id, name, kind: f.dataset.kind });
+  saveBilanz();
+  sound.play('tap');
+  renderBilanz();
+  $('bGroups').querySelector(`[data-val="${id}"]`).focus();
+});
+
+// Löschen in zwei Schritten: × → „Löschen“
+$('bGroups').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-rm]');
+  if (!b) { if (bConfirm) { bConfirm = null; renderBilanz(); } return; }
+  const id = b.dataset.rm;
+  if (bConfirm !== id) { bConfirm = id; sound.play('tap'); renderBilanz(); return; }
+  bConfirm = null;
+  bilanz.accounts = bilanz.accounts.filter(a => a.id !== id);
+  for (const k of Object.keys(bilanz.values)) { delete bilanz.values[k][id]; if (!Object.keys(bilanz.values[k]).length) delete bilanz.values[k]; }
+  saveBilanz();
+  sound.play('delete');
+  renderBilanz();
+});
+
+$('bTableToggle').addEventListener('click', () => {
+  sound.play('tap');
+  const show = $('bTable').hidden;
+  $('bTable').hidden = !show; $('bChart').hidden = show;
+  $('bTableToggle').textContent = show ? 'Diagramm' : 'Tabelle';
+});
+addEventListener('resize', () => { if ($('bilanz').open) renderBilanzSums(false); });
 
 /* ---------- Einstellungen ---------- */
 
