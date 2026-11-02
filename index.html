@@ -526,13 +526,13 @@
     <div id="syncSection" style="display:grid;gap:10px" hidden>
       <h3>Synchronisation</h3>
       <div id="syncOut" style="display:grid;gap:8px">
-        <p class="hint" id="syncHint">Melde dich mit deiner E-Mail an, dann sind deine Einträge auf allen Geräten gleich. Du bekommst einen Anmelde-Link, ein Passwort gibt es nicht.</p>
+        <p class="hint" id="syncHint"></p>
         <form class="cat-add" id="emailForm">
           <input class="field" id="syncEmail" type="email" placeholder="E-Mail" autocomplete="email" required>
-          <button class="btn primary" type="submit">Link senden</button>
+          <button class="btn primary" type="submit">Code senden</button>
         </form>
         <form class="cat-add" id="codeForm" hidden>
-          <input class="field" id="syncCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Code aus der E-Mail" maxlength="10">
+          <input class="field" id="syncCode" inputmode="numeric" autocomplete="one-time-code" placeholder="6-stelliger Code" maxlength="10">
           <button class="btn primary" type="submit">Anmelden</button>
           <button class="btn" type="button" id="codeBack">Zurück</button>
         </form>
@@ -1604,8 +1604,8 @@ function renderSync() {
   $('codeForm').hidden = !pendingEmail;
   $('emailForm').hidden = !!pendingEmail;
   $('syncHint').innerHTML = pendingEmail
-    ? `Mail an <b>${esc(pendingEmail)}</b> ist unterwegs. Tippe auf den Link darin, danach bist du hier automatisch angemeldet. Steht in der Mail ein Code, kannst du ihn auch unten eingeben.`
-    : 'Melde dich mit deiner E-Mail an, dann sind deine Einträge auf allen Geräten gleich. Du bekommst einen Anmelde-Link, ein Passwort gibt es nicht.';
+    ? `Code an <b>${esc(pendingEmail)}</b> ist unterwegs. Gib ihn hier ein.`
+    : 'Melde dich mit deiner E-Mail an, dann sind deine Daten auf allen Geräten gleich und nur für dich sichtbar. Du bekommst einen Code per Mail, ein Passwort gibt es nicht.';
   if (!user) return;
   const t = cloud.lastSync?.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   const s = {
@@ -1655,10 +1655,16 @@ $('codeForm').addEventListener('submit', async ev => {
 
 $('codeBack').addEventListener('click', () => { pendingEmail = ''; renderSync(); });
 $('syncNow').addEventListener('click', async () => { sound.play('tap'); await cloud.run(); if (cloud.status === 'idle') toast('Synchronisiert'); });
+// Die Daten gehören zum Konto: erst alles hochladen, dann das Gerät für die nächste Person leeren
 $('signOut').addEventListener('click', async () => {
+  await cloud.run();
+  if (cloud.status !== 'idle') { sound.play('error'); toast('Abmelden geht erst, wenn alles synchronisiert ist'); return; }
   sound.play('close');
   await cloud.signOut();
-  toast('Abgemeldet. Die Einträge bleiben auf diesem Gerät.');
+  state = normalize({}); bilanz = normBilanz();
+  for (const k of [KEY, BILANZ_KEY, BACKUP_KEY]) try { localStorage.removeItem(k); } catch {}
+  resetForm(); render(); renderChips(); renderCats(); renderBackup();
+  toast('Abgemeldet, Daten sind in deinem Konto');
 });
 
 // Abgleich beim Öffnen, beim Zurückkehren in die App, wenn das Netz wieder da ist und regelmäßig im Vordergrund
@@ -1862,22 +1868,31 @@ function totals(k) {
   return { a, d, net: a - d };
 }
 
-// Letzter bekannter Stand eines Kontos vor dem Monat k (als Vorschlag)
-function lastKnown(id, k) {
-  let v;
-  for (const kk of Object.keys(bilanz.values).sort()) { if (kk >= k) break; if (bilanz.values[kk][id] != null) v = bilanz.values[kk][id]; }
-  return v;
+// Stände des letzten Monats vor k, der überhaupt einen Stand hat (als Vorschlag)
+function prevValues(k) {
+  let p;
+  for (const kk of Object.keys(bilanz.values).sort()) { if (kk >= k) break; p = kk; }
+  return p ? bilanz.values[p] : null;
+}
+
+// Angezeigt wird ein Konto, wenn es im Monat oder im Vormonat einen Stand hat oder noch ganz neu ist,
+// damit aufgelöste Konten (z. B. ein verkauftes Motorrad) nicht in jedem späteren Monat auftauchen
+function visibleAccounts(k) {
+  const cur = bilanz.values[k] || {}, prev = prevValues(k) || {};
+  const used = new Set(Object.values(bilanz.values).flatMap(Object.keys));
+  return bilanz.accounts.filter(a => a.id in cur || a.id in prev || !used.has(a.id));
 }
 
 function renderBilanz(slide) {
   const k = mkey(bView.getFullYear(), bView.getMonth());
   $('bMonth').textContent = monthFmt.format(bView);
   if (slide) { replay($('bMonth'), 'slide-' + slide); replay($('bGroups'), 'slide-' + slide); }
+  const shown = visibleAccounts(k), prev = prevValues(k) || {};
   $('bGroups').innerHTML = Object.entries(KINDS).map(([kind, [label, add]]) => `
     <div class="bgroup ${kind}">
       <div class="bhead"><span>${label}</span><b data-sum="${kind}"></b></div>
-      ${bilanz.accounts.filter(a => a.kind === kind).map(a => {
-        const v = bilanz.values[k]?.[a.id], last = lastKnown(a.id, k);
+      ${shown.filter(a => a.kind === kind).map(a => {
+        const v = bilanz.values[k]?.[a.id], last = prev[a.id];
         return `<div class="brow">
           <input class="bname" value="${esc(a.name)}" data-name="${a.id}" maxlength="40" aria-label="Name">
           <input class="bval" inputmode="decimal" data-val="${a.id}" value="${v == null ? '' : money(v)}" placeholder="${last == null ? '0,00' : money(last)}" aria-label="Stand">
@@ -1900,7 +1915,7 @@ function renderBilanzSums(animate) {
   $('bDelta').textContent = !t ? 'Noch kein Stand für diesen Monat'
     : diff == null ? 'Nettovermögen'
     : `${diff >= 0 ? '+' : '−'}${eur.format(Math.abs(diff))} zum Vormonat`;
-  $('bCopy').hidden = !!t || !bilanz.accounts.some(a => lastKnown(a.id, k) != null);
+  $('bCopy').hidden = !!t || !prevValues(k);
   document.querySelectorAll('[data-sum]').forEach(el => { el.textContent = eur.format(t ? t[el.dataset.sum === 'debt' ? 'd' : 'a'] : 0); });
 
   // Jahresverlauf
@@ -2007,9 +2022,7 @@ $('bNext').addEventListener('click', () => bilanzMonth(1));
 
 $('bCopy').addEventListener('click', () => {
   const k = mkey(bView.getFullYear(), bView.getMonth());
-  const vals = {};
-  for (const a of bilanz.accounts) { const v = lastKnown(a.id, k); if (v != null) vals[a.id] = v; }
-  bilanz.values[k] = vals;
+  bilanz.values[k] = { ...prevValues(k) };
   saveBilanz();
   sound.play('in');
   renderBilanz();
