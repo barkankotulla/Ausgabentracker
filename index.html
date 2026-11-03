@@ -59,7 +59,6 @@
 
   /* Kopfzeile */
   .top { display: flex; align-items: center; gap: 4px; min-height: 36px; }
-  .top .pill { margin-right: auto; font-size: 12px; font-weight: 600; color: var(--out); background: var(--out-bg); border-radius: 99px; padding: 6px 12px; }
   .top .spacer { margin-right: auto; }
   .icon { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); transition: background .15s, color .15s; }
   .icon:hover { background: var(--line); color: var(--text); }
@@ -339,8 +338,7 @@
 <body>
 <main>
   <div class="top">
-    <button class="pill" id="permPill" hidden>Sicherung freigeben</button>
-    <span class="spacer" id="spacer"></span>
+    <span class="spacer"></span>
     <button class="icon" id="analysisBtn" aria-label="Analyse">
       <svg viewBox="0 0 24 24"><path d="M6 20v-8M12 20V5M18 20v-5"/></svg>
     </button>
@@ -563,7 +561,6 @@
     <h3>Sicherung</h3>
     <p class="hint" id="backupStatus"></p>
     <div class="btns">
-      <button class="btn primary" id="folderBtn">Ordner wählen</button>
       <button class="btn" id="backupNow">Jetzt sichern</button>
       <button class="btn" id="exportBtn">Exportieren</button>
     </div>
@@ -749,7 +746,6 @@ function load() {
 
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
-  scheduleFolderBackup();
   cloud.schedule();
 }
 
@@ -1216,68 +1212,11 @@ function snapshot() {
   try { localStorage.setItem(BACKUP_KEY, JSON.stringify(list.slice(0, MAX_SNAPSHOTS))); } catch {}
 }
 
-// Mini-Schlüsselspeicher in IndexedDB für den gewählten Sicherungsordner
-const kv = (() => {
-  let db;
-  const open = () => db ??= new Promise((res, rej) => {
-    const r = indexedDB.open('ausgaben', 1);
-    r.onupgradeneeded = () => r.result.createObjectStore('kv');
-    r.onsuccess = () => res(r.result);
-    r.onerror = () => rej(r.error);
-  });
-  const run = async (mode, fn) => {
-    const d = await open();
-    return new Promise((res, rej) => {
-      const tx = d.transaction('kv', mode), req = fn(tx.objectStore('kv'));
-      tx.oncomplete = () => res(req.result);
-      tx.onerror = () => rej(tx.error);
-    });
-  };
-  return { get: k => run('readonly', s => s.get(k)), set: (k, v) => run('readwrite', s => s.put(v, k)) };
-})();
-
-const folderSupported = 'showDirectoryPicker' in window;
-let folder = null;
-let folderState = folderSupported ? 'none' : 'unsupported'; // none | ok | perm | error | unsupported
-let lastFolderBackup = null;
-let folderTimer;
-
-async function backupToFolder(ask) {
-  if (!folder) return;
-  try {
-    let perm = await folder.queryPermission({ mode: 'readwrite' });
-    if (perm !== 'granted' && ask) perm = await folder.requestPermission({ mode: 'readwrite' });
-    if (perm !== 'granted') { folderState = 'perm'; return renderBackup(); }
-    const file = await folder.getFileHandle(`ausgaben-${iso(new Date())}.json`, { create: true });
-    const w = await file.createWritable();
-    await w.write(JSON.stringify(backupData(), null, 1));
-    await w.close();
-    folderState = 'ok';
-    lastFolderBackup = new Date();
-  } catch {
-    folderState = 'error';
-  }
-  renderBackup();
-}
-
-function scheduleFolderBackup() {
-  clearTimeout(folderTimer);
-  if (folderState === 'ok') folderTimer = setTimeout(backupToFolder, 1500);
-}
-
 function renderBackup() {
-  const status = {
-    unsupported: 'Automatische Ordner-Sicherung geht nur in Chrome oder Edge. Lokale Schnappschüsse laufen trotzdem bei jedem Öffnen.',
-    none: 'Bei jedem Öffnen wird ein lokaler Schnappschuss gespeichert. Wähle zusätzlich einen Ordner, zum Beispiel in OneDrive, Dropbox oder Google Drive, dann landet die Sicherung automatisch auch in der Cloud.',
-    ok: `Sichert automatisch in <b>${esc(folder?.name || '')}</b>${lastFolderBackup ? `, zuletzt um ${lastFolderBackup.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}` : ''}.`,
-    perm: `Der Browser braucht eine erneute Freigabe für <b>${esc(folder?.name || '')}</b>.`,
-    error: 'Die letzte Ordner-Sicherung ist fehlgeschlagen. Wähle den Ordner neu.',
-  }[folderState];
-  $('backupStatus').innerHTML = status;
-  $('folderBtn').hidden = !folderSupported;
-  $('folderBtn').textContent = folderState === 'perm' ? 'Freigeben' : folder ? 'Ordner ändern' : 'Ordner wählen';
-  $('permPill').hidden = folderState !== 'perm';
-  $('spacer').hidden = folderState === 'perm';
+  $('backupStatus').innerHTML = (cloud.user
+    ? 'Deine Daten liegen sicher in deinem Konto. '
+    : 'Melde dich oben an, dann liegen deine Daten zusätzlich sicher in deinem Konto. ')
+    + 'Außerdem speichert die App bei jedem Öffnen einen Schnappschuss auf diesem Gerät.';
 
   const snaps = readSnapshots();
   $('snapList').innerHTML = snaps.length
@@ -1298,21 +1237,8 @@ function restore(data, msg) {
   renderBackup(); renderCats();
 }
 
-async function chooseFolder() {
-  if (folderState === 'perm') return backupToFolder(true);
-  try {
-    folder = await showDirectoryPicker({ id: 'ausgaben', mode: 'readwrite' });
-    await kv.set('folder', folder);
-    await backupToFolder(true);
-  } catch {}
-}
-
-$('folderBtn').addEventListener('click', chooseFolder);
-$('permPill').addEventListener('click', () => backupToFolder(true));
-
-$('backupNow').addEventListener('click', async () => {
+$('backupNow').addEventListener('click', () => {
   snapshot();
-  if (folder) await backupToFolder(true);
   renderBackup();
   sound.play('in');
   toast('Gesichert');
@@ -1814,7 +1740,6 @@ function loadBilanz() {
 }
 function saveBilanz() {
   try { localStorage.setItem(BILANZ_KEY, JSON.stringify(bilanz)); } catch {}
-  scheduleFolderBackup();
   cloud.schedule();
 }
 
@@ -2112,9 +2037,8 @@ setTimeout(async () => {
   snapshot();
   await cloud.fromRedirect();
   cloud.run();
-  if (!folderSupported) return;
-  try { folder = await kv.get('folder') || null; } catch {}
-  if (folder) await backupToFolder(); else renderBackup();
+  // Überbleibsel der früheren Ordner-Sicherung (gespeicherter Ordnerzugriff) entfernen
+  try { indexedDB.deleteDatabase('ausgaben'); } catch {}
 }, 0);
 </script>
 </body>
