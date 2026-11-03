@@ -7,8 +7,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0c0a09" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f3f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1f24" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>try { const t = localStorage.getItem('ausgaben.theme'); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
@@ -16,38 +16,28 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
+  /* Farben „Schiefer“: gedeckt und kühl, im Dunkeln Schiefer-Blaugrau statt Schwarz.
+     --on-tone ist die Schrift auf farbigen Flächen (Speichern, gewählter Chip …) */
   :root {
     color-scheme: light;
-    --bg: #fafaf9;
-    --surface: #ffffff;
-    --text: #1c1917;
-    --muted: #a8a29e;
-    --line: #e7e5e4;
-    --in: #16a34a;
-    --out: #dc2626;
-    --in-bg: #effcf3;
-    --out-bg: #fef1f1;
-    --in-line: #c6f0d4;
-    --out-line: #fbd5d5;
-    --field: rgb(255 255 255 / .75);
-    --key: rgb(255 255 255 / .85);
-    --in-chart: #16a34a;
-    --out-chart: #dc2626;
+    --bg: #f3f5f7; --surface: #fdfdfe; --text: #262b32; --muted: #8b939e; --line: #e1e5ea;
+    --in: #3f7f74; --out: #b9626b; --in-bg: #e9f2f0; --out-bg: #f6ebed; --in-line: #cde1dc; --out-line: #ecd3d7;
+    --field: rgb(255 255 255 / .7); --key: rgb(255 255 255 / .8); --in-chart: #5f9a8f; --out-chart: #cc7f87; --on-tone: #fff;
     --radius: 14px;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --bg: #0c0a09; --surface: #1c1917; --text: #f5f5f4; --muted: #78716c; --line: #292524;
-      --in: #4ade80; --out: #f87171; --in-bg: #0f2117; --out-bg: #2a1212; --in-line: #1a3a26; --out-line: #4a1d1d;
-      --field: rgb(0 0 0 / .25); --key: rgb(255 255 255 / .06); --in-chart: #22c55e; --out-chart: #ef4444;
+      --bg: #1b1f24; --surface: #242930; --text: #e4e8ed; --muted: #848d98; --line: #313840;
+      --in: #86c0b3; --out: #e29aa1; --in-bg: #1f2c2b; --out-bg: #30242a; --in-line: #2f4541; --out-line: #4b333a;
+      --field: rgb(255 255 255 / .04); --key: rgb(255 255 255 / .06); --in-chart: #71ab9f; --out-chart: #d5868e; --on-tone: #1b1f24;
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #0c0a09; --surface: #1c1917; --text: #f5f5f4; --muted: #78716c; --line: #292524;
-    --in: #4ade80; --out: #f87171; --in-bg: #0f2117; --out-bg: #2a1212; --in-line: #1a3a26; --out-line: #4a1d1d;
-    --field: rgb(0 0 0 / .25); --key: rgb(255 255 255 / .06); --in-chart: #22c55e; --out-chart: #ef4444;
+    --bg: #1b1f24; --surface: #242930; --text: #e4e8ed; --muted: #848d98; --line: #313840;
+    --in: #86c0b3; --out: #e29aa1; --in-bg: #1f2c2b; --out-bg: #30242a; --in-line: #2f4541; --out-line: #4b333a;
+    --field: rgb(255 255 255 / .04); --key: rgb(255 255 255 / .06); --in-chart: #71ab9f; --out-chart: #d5868e; --on-tone: #1b1f24;
   }
   * { box-sizing: border-box; margin: 0; }
   [hidden] { display: none !important; }
@@ -101,7 +91,7 @@
     transition: transform .42s var(--spring), background .25s, opacity .2s;
   }
   .seg button { position: relative; padding: 7px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--muted); transition: color .25s; }
-  .seg button[aria-pressed="true"] { color: var(--tone-fg, #fff); }
+  .seg button[aria-pressed="true"] { color: var(--tone-fg, var(--on-tone)); }
   .amount-wrap { display: flex; align-items: baseline; gap: 8px; }
   .amount { flex: 1; min-width: 0; color: var(--tone); font-size: 30px; font-weight: 700; letter-spacing: -.02em; border: 0; background: none; outline: none; padding: 4px 2px; font-variant-numeric: tabular-nums; transition: color .25s; }
   .amount::placeholder { color: var(--tone); opacity: .3; }
@@ -111,7 +101,7 @@
   .keypad button { height: 44px; border-radius: 10px; background: var(--key); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; transition: transform .08s, background .15s; user-select: none; }
   .keypad button:active { transform: scale(.95); }
   .keypad .op { color: var(--tone); }
-  .keypad .eq { grid-row: span 2; height: auto; background: var(--tone); color: #fff; }
+  .keypad .eq { grid-row: span 2; height: auto; background: var(--tone); color: var(--on-tone); }
   .keypad .zero { grid-column: span 2; }
 
   .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -131,10 +121,10 @@
   .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: -2px 0; padding: 2px 0; }
   .chips::-webkit-scrollbar { display: none; }
   .chip { flex: none; font-size: 13px; font-weight: 500; padding: 5px 12px; border-radius: 99px; background: var(--field); color: var(--text); transition: background .15s, color .15s; }
-  .chip.on { background: var(--tone); color: #fff; }
+  .chip.on { background: var(--tone); color: var(--on-tone); }
 
   .actions { display: flex; gap: 8px; }
-  .save { flex: 1; background: var(--tone); color: #fff; border-radius: 10px; padding: 12px; font-weight: 600; transition: background .25s, transform .1s, filter .15s; }
+  .save { flex: 1; background: var(--tone); color: var(--on-tone); border-radius: 10px; padding: 12px; font-weight: 600; transition: background .25s, transform .1s, filter .15s; }
   .save:hover { filter: brightness(1.08); }
   .save:active { transform: scale(.98); }
   .ghost { padding: 11px 14px; border-radius: 10px; color: var(--muted); font-weight: 500; }
@@ -156,7 +146,7 @@
   .del:hover { background: var(--out-bg); color: var(--out); }
   .ask { display: flex; gap: 6px; }
   .ask button { font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 99px; background: var(--out-bg); color: var(--out); }
-  .ask button:last-child { background: var(--out); color: #fff; }
+  .ask button:last-child { background: var(--out); color: var(--on-tone); }
   .empty { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 0; }
 
   /* Analyse */
@@ -218,7 +208,7 @@
   .bval { width: 7em; flex: none; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--tone); }
   @supports (field-sizing: content) { .bval { width: auto; field-sizing: content; min-width: 3.5em; } }
   .bval::placeholder { color: var(--muted); font-weight: 500; opacity: .7; }
-  .brow .del.sure { width: auto; padding: 0 12px; border-radius: 99px; font-size: 13px; font-weight: 600; background: var(--out); color: #fff; opacity: 1; }
+  .brow .del.sure { width: auto; padding: 0 12px; border-radius: 99px; font-size: 13px; font-weight: 600; background: var(--out); color: var(--on-tone); opacity: 1; }
   .badd { border-top: 1px solid var(--line); }
   .badd input { width: 100%; }
   .badd input::placeholder { color: var(--muted); }
@@ -1132,7 +1122,8 @@ function setTheme(t) {
 
 function renderTheme() {
   $('themeBtn').innerHTML = isDark() ? ICON_SUN : ICON_MOON;
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.content = isDark() ? '#0c0a09' : '#fafaf9'; });
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.content = bg; });
   const cur = document.documentElement.dataset.theme || '';
   press($('themeSeg'), b => b.dataset.themeSet === cur);
 }

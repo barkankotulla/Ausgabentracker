@@ -16,4 +16,4 @@ createServer(async (req, res) => {
   } catch {
     res.writeHead(404).end('Nicht gefunden');
   }
-}).listen(5173, () => console.log('http://localhost:5173'));
+}).listen(+process.env.PORT || 5173, function () { console.log('http://localhost:' + this.address().port); });
