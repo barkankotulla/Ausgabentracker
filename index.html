@@ -8,7 +8,7 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#f3f5f7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1b1f24" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#121417" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>try { const t = localStorage.getItem('ausgaben.theme'); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
-  /* Farben „Schiefer“: gedeckt und kühl, im Dunkeln Schiefer-Blaugrau statt Schwarz.
+  /* Farben „Schiefer“: gedeckt und kühl, im Dunkeln ein sattes, leicht kühles Fast-Schwarz.
      --on-tone ist die Schrift auf farbigen Flächen (Speichern, gewählter Chip …) */
   :root {
     color-scheme: light;
@@ -28,16 +28,16 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --bg: #1b1f24; --surface: #242930; --text: #e4e8ed; --muted: #848d98; --line: #313840;
-      --in: #86c0b3; --out: #e29aa1; --in-bg: #1f2c2b; --out-bg: #30242a; --in-line: #2f4541; --out-line: #4b333a;
-      --field: rgb(255 255 255 / .04); --key: rgb(255 255 255 / .06); --in-chart: #71ab9f; --out-chart: #d5868e; --on-tone: #1b1f24;
+      --bg: #121417; --surface: #1c1f23; --text: #f1f3f5; --muted: #8a929c; --line: #2a2e34;
+      --in: #86c0b3; --out: #e29aa1; --in-bg: #15231f; --out-bg: #291b20; --in-line: #26403a; --out-line: #4a2d35;
+      --field: rgb(255 255 255 / .05); --key: rgb(255 255 255 / .07); --in-chart: #71ab9f; --out-chart: #d5868e; --on-tone: #121417;
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #1b1f24; --surface: #242930; --text: #e4e8ed; --muted: #848d98; --line: #313840;
-    --in: #86c0b3; --out: #e29aa1; --in-bg: #1f2c2b; --out-bg: #30242a; --in-line: #2f4541; --out-line: #4b333a;
-    --field: rgb(255 255 255 / .04); --key: rgb(255 255 255 / .06); --in-chart: #71ab9f; --out-chart: #d5868e; --on-tone: #1b1f24;
+    --bg: #121417; --surface: #1c1f23; --text: #f1f3f5; --muted: #8a929c; --line: #2a2e34;
+    --in: #86c0b3; --out: #e29aa1; --in-bg: #15231f; --out-bg: #291b20; --in-line: #26403a; --out-line: #4a2d35;
+    --field: rgb(255 255 255 / .05); --key: rgb(255 255 255 / .07); --in-chart: #71ab9f; --out-chart: #d5868e; --on-tone: #121417;
   }
   * { box-sizing: border-box; margin: 0; }
   [hidden] { display: none !important; }
