@@ -62,6 +62,7 @@
   .top .spacer { margin-right: auto; }
   .icon { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); transition: background .15s, color .15s; }
   .icon:hover { background: var(--line); color: var(--text); }
+  .icon:disabled { opacity: .25; pointer-events: none; }
   .icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
   /* Monat + Saldo */
@@ -150,7 +151,7 @@
 
   /* Analyse */
   #analysis { width: min(560px, calc(100% - 32px)); }
-  .range { font-size: 13px; color: var(--muted); text-align: center; font-weight: 500; }
+  .sheet .month { margin-top: 0; }
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .tile { background: var(--bg); border-radius: 12px; padding: 10px 12px; min-width: 0; }
   .tile span { display: block; font-size: 12px; color: var(--muted); font-weight: 500; }
@@ -191,7 +192,6 @@
   /* Bilanz */
   #bilanz { width: min(560px, calc(100% - 32px)); }
   #bilanz .sheet, #bGroups { grid-template-columns: minmax(0, 1fr); }
-  #bilanz .month { margin-top: 0; }
   #bilanz .balance { margin: 4px 0 0; font-size: 40px; }
   .delta { text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 18px; }
   .delta.pos { color: var(--in); }
@@ -217,6 +217,8 @@
   .chart .dot { fill: var(--surface); stroke: var(--in-chart); stroke-width: 2; transition: r .15s; }
   .chart .dot.active { fill: var(--in-chart); r: 6px; }
   .chart .zero { stroke: var(--muted); stroke-opacity: .6; }
+  .chart.long .dot { r: 0; animation: none; }
+  .chart.long .dot.active { r: 5px; }
 
   /* Toast */
   .toast {
@@ -447,9 +449,13 @@
     <div class="seg" id="periodSeg">
       <button type="button" data-period="month">Monat</button>
       <button type="button" data-period="year">Jahr</button>
-      <button type="button" data-period="12">12 Monate</button>
+      <button type="button" data-period="all">Gesamt</button>
     </div>
-    <p class="range" id="rangeLabel"></p>
+    <div class="month">
+      <button class="icon" id="aPrev" aria-label="Zurück">‹</button>
+      <span id="rangeLabel"></span>
+      <button class="icon" id="aNext" aria-label="Weiter">›</button>
+    </div>
     <div class="tiles">
       <div class="tile in"><span>Einnahmen</span><b id="aIn"></b></div>
       <div class="tile out"><span>Ausgaben</span><b id="aOut"></b></div>
@@ -488,7 +494,16 @@
     <button class="btn" id="bCopy" hidden>Stand vom Vormonat übernehmen</button>
     <div id="bGroups" style="display:grid;gap:8px"></div>
 
-    <h3 id="bYear"></h3>
+    <h3>Verlauf</h3>
+    <div class="seg" id="bRangeSeg">
+      <button type="button" data-range="year">Jahr</button>
+      <button type="button" data-range="all">Gesamt</button>
+    </div>
+    <div class="month">
+      <button class="icon" id="bYPrev" aria-label="Vorheriges Jahr">‹</button>
+      <span id="bYear"></span>
+      <button class="icon" id="bYNext" aria-label="Nächstes Jahr">›</button>
+    </div>
     <div class="tiles">
       <div class="tile"><span>Zuwachs</span><b id="bGrow"></b></div>
       <div class="tile"><span>Ø pro Monat</span><b id="bAvg"></b></div>
@@ -1594,19 +1609,34 @@ setInterval(() => { if (!document.hidden) cloud.run(); }, 30000);
 /* ---------- Analyse ---------- */
 
 let period = 'month';
+let aView = new Date(view.getFullYear(), view.getMonth(), 1);
 const monthShort = new Intl.DateTimeFormat('de-DE', { month: 'short' });
 const shortMonth = (y, m) => monthShort.format(new Date(y, m, 1)).replace('.', '');
 
+// Monate von (y, m) bis (ly, lm) als Liste von [Jahr, Monat]
+const monthSpan = (y, m, ly, lm) => Array.from({ length: Math.max(0, (ly - y) * 12 + lm - m + 1) }, (_, i) => { const d = new Date(y, m + i, 1); return [d.getFullYear(), d.getMonth()]; });
+
+// Erster Monat mit einem Eintrag, ohne Einträge der aktuelle
+function firstMonth() {
+  let min = iso(new Date());
+  for (const e of state.entries) if (e.date < min) min = e.date;
+  return [+min.slice(0, 4), +min.slice(5, 7) - 1];
+}
+
 function monthsFor(p) {
-  const y = view.getFullYear(), m = view.getMonth();
+  const y = aView.getFullYear(), m = aView.getMonth(), now = new Date();
   if (p === 'month') return [[y, m]];
-  if (p === 'year') return Array.from({ length: 12 }, (_, i) => [y, i]);
-  return Array.from({ length: 12 }, (_, i) => { const d = new Date(y, m - 11 + i, 1); return [d.getFullYear(), d.getMonth()]; });
+  // Laufendes Jahr: von Januar bis jetzt
+  if (p === 'year') return monthSpan(y, 0, y, y === now.getFullYear() ? now.getMonth() : 11);
+  if (p === 'all') return monthSpan(...firstMonth(), now.getFullYear(), now.getMonth());
+  return monthSpan(y, m - 11, y, m);
 }
 
 function sumMonth(y, m, cats) {
   let sIn = 0, sOut = 0;
+  const key = mkey(y, m); // Einzelbuchungen schnell aussortieren, wichtig für die Gesamtansicht
   for (const e of state.entries) {
+    if (!e.repeat && !e.date.startsWith(key)) continue;
     const n = occurrencesIn(e, y, m).length;
     if (!n) continue;
     const v = n * e.amount;
@@ -1616,30 +1646,59 @@ function sumMonth(y, m, cats) {
   return { in: sIn, out: sOut };
 }
 
-function renderAnalysis() {
+function renderAnalysis(slide) {
   press($('periodSeg'), b => b.dataset.period === period);
   const months = monthsFor(period);
   const cats = { in: new Map(), out: new Map() };
-  let tIn = 0, tOut = 0;
-  for (const [y, m] of months) { const s = sumMonth(y, m, cats); tIn += s.in; tOut += s.out; }
+  const rows = months.map(([y, m]) => ({ y, m, ...sumMonth(y, m, cats) }));
+  const tIn = rows.reduce((s, r) => s + r.in, 0), tOut = rows.reduce((s, r) => s + r.out, 0);
 
   const [fy, fm] = months[0], [ly, lm] = months[months.length - 1];
-  $('rangeLabel').textContent = period === 'month' ? monthFmt.format(view)
+  $('rangeLabel').textContent = period === 'month' ? monthFmt.format(aView)
     : period === 'year' ? String(fy)
     : `${shortMonth(fy, fm)} ${fy} – ${shortMonth(ly, lm)} ${ly}`;
+  if (slide) replay($('rangeLabel'), 'slide-' + slide);
+  renderAnalysisNav();
   tween($('aIn'), tIn);
   tween($('aOut'), tOut);
   tween($('aBal'), tIn - tOut);
 
-  // Verlauf: im Jahresmodus das Kalenderjahr, sonst die letzten 12 Monate
-  const data = monthsFor(period === 'year' ? 'year' : '12').map(([y, m]) => ({ y, m, ...sumMonth(y, m) }));
+  // Verlauf: Monat = die 12 Monate bis dahin, Jahr = seine Monate, Gesamt = ein Balkenpaar pro Jahr
+  let data = rows;
+  if (period === 'month') data = monthsFor('12').map(([y, m]) => ({ y, m, ...sumMonth(y, m) }));
+  if (period === 'all') {
+    const years = new Map();
+    for (const r of rows) { const a = years.get(r.y) || { y: r.y, in: 0, out: 0 }; a.in += r.in; a.out += r.out; years.set(r.y, a); }
+    data = [...years.values()];
+  }
   renderChart(data);
-  $('monthTable').innerHTML = `<table class="months"><thead><tr><th>Monat</th><th>Einnahmen</th><th>Ausgaben</th><th>Saldo</th></tr></thead><tbody>${
-    data.map(d => `<tr><td>${shortMonth(d.y, d.m)} ${d.y}</td><td>${eur.format(d.in)}</td><td>${eur.format(d.out)}</td><td>${eur.format(d.in - d.out)}</td></tr>`).join('')
+  const rowLabel = d => d.m == null ? d.y : `${shortMonth(d.y, d.m)} ${d.y}`;
+  $('monthTable').innerHTML = `<table class="months"><thead><tr><th>${period === 'all' ? 'Jahr' : 'Monat'}</th><th>Einnahmen</th><th>Ausgaben</th><th>Saldo</th></tr></thead><tbody>${
+    data.map(d => `<tr><td>${rowLabel(d)}</td><td>${eur.format(d.in)}</td><td>${eur.format(d.out)}</td><td>${eur.format(d.in - d.out)}</td></tr>`).join('')
   }</tbody></table>`;
 
   $('catOut').innerHTML = catList(cats.out, 'out');
   $('catIn').innerHTML = catList(cats.in, 'in');
+}
+
+// Pfeile: zurück bis zum ersten Eintrag, vor bis heute; bei „Gesamt“ gibt es nichts zu blättern
+function renderAnalysisNav() {
+  const [fy, fm] = firstMonth(), now = new Date();
+  const y = aView.getFullYear(), m = aView.getMonth();
+  const isYear = period === 'year';
+  $('aPrev').disabled = isYear ? y <= fy : y * 12 + m <= fy * 12 + fm;
+  $('aNext').disabled = isYear ? y >= now.getFullYear() : y * 12 + m >= now.getFullYear() * 12 + now.getMonth();
+  for (const id of ['aPrev', 'aNext']) $(id).style.visibility = period === 'all' ? 'hidden' : '';
+  $('aPrev').setAttribute('aria-label', isYear ? 'Vorheriges Jahr' : 'Vorheriger Monat');
+  $('aNext').setAttribute('aria-label', isYear ? 'Nächstes Jahr' : 'Nächster Monat');
+}
+
+function analysisStep(delta) {
+  const y = aView.getFullYear(), m = aView.getMonth(), now = new Date();
+  aView = period === 'year' ? new Date(y + delta, m, 1) : new Date(y, m + delta, 1);
+  if (aView > now) aView = new Date(now.getFullYear(), now.getMonth(), 1);
+  sound.play('swipe');
+  renderAnalysis(delta > 0 ? 'next' : 'prev');
 }
 
 function catList(map, t) {
@@ -1675,20 +1734,23 @@ function renderChart(data) {
   for (let t = step; t <= top + 1e-9; t += step) {
     svg += `<line class="grid" x1="${padL}" x2="${W}" y1="${yS(t)}" y2="${yS(t)}"/><text x="${padL - 8}" y="${yS(t) + 4}" text-anchor="end">${axisNum(t)}</text>`;
   }
+  // Hervorgehoben: im Monatsmodus der gewählte Monat, sonst der heutige bzw. das laufende Jahr
+  const mark = period === 'month' ? aView : today;
   data.forEach((d, i) => {
+    const isYear = d.m == null;
     const cx = padL + gw * (i + 0.5);
-    const future = new Date(d.y, d.m, 1) > today;
-    const cur = d.y === view.getFullYear() && d.m === view.getMonth();
+    const future = !isYear && new Date(d.y, d.m, 1) > today;
+    const cur = d.y === mark.getFullYear() && (isYear || d.m === mark.getMonth());
     svg += `<g class="g${future ? ' future' : ''}" data-g="${i}" style="--d:${i}">`;
     if (d.in) svg += `<path class="bar-in" d="${barPath(cx - 1 - bw, yS(d.in), bw, y0)}"/>`;
     if (d.out) svg += `<path class="bar-out" d="${barPath(cx + 1, yS(d.out), bw, y0)}"/>`;
     svg += `</g>`;
-    if (showAll || (data.length - 1 - i) % 2 === 0) svg += `<text class="${cur ? 'cur' : ''}" x="${cx}" y="${H - 6}" text-anchor="middle">${shortMonth(d.y, d.m)}</text>`;
+    if (showAll || (data.length - 1 - i) % 2 === 0) svg += `<text class="${cur ? 'cur' : ''}" x="${cx}" y="${H - 6}" text-anchor="middle">${isYear ? d.y : shortMonth(d.y, d.m)}</text>`;
   });
   svg += `<line class="base" x1="${padL}" x2="${W}" y1="${y0}" y2="${y0}"/>`;
   data.forEach((_, i) => { svg += `<rect class="hit" data-i="${i}" x="${padL + gw * i}" y="0" width="${gw}" height="${H}"/>`; });
 
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Einnahmen und Ausgaben pro Monat">${svg}</svg><div class="tip" hidden></div>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Einnahmen und Ausgaben pro ${period === 'all' ? 'Jahr' : 'Monat'}">${svg}</svg><div class="tip" hidden></div>`;
 
   const tip = el.querySelector('.tip');
   const hide = () => { tip.hidden = true; el.classList.remove('hovering'); el.querySelectorAll('.g.active').forEach(g => g.classList.remove('active')); };
@@ -1698,7 +1760,7 @@ function renderChart(data) {
     const i = +hit.dataset.i, d = data[i];
     el.classList.add('hovering');
     el.querySelectorAll('.g').forEach(g => g.classList.toggle('active', +g.dataset.g === i));
-    tip.innerHTML = `<b>${monthFmt.format(new Date(d.y, d.m, 1))}</b>
+    tip.innerHTML = `<b>${d.m == null ? d.y : monthFmt.format(new Date(d.y, d.m, 1))}</b>
       <i style="background:var(--in-chart)"></i>Einnahmen<span>${eur.format(d.in)}</span><br>
       <i style="background:var(--out-chart)"></i>Ausgaben<span>${eur.format(d.out)}</span><br>
       Saldo<span>${eur.format(d.in - d.out)}</span>`;
@@ -1707,13 +1769,25 @@ function renderChart(data) {
     tip.style.left = Math.min(Math.max(padL + gw * (i + 0.5), half), W - half) + 'px';
   };
   el.onpointerleave = hide;
+  // In der Gesamtansicht springt Antippen ins Jahr
+  el.onclick = ev => {
+    const hit = ev.target.closest('[data-i]'), d = hit && data[+hit.dataset.i];
+    if (!d || d.m != null) return;
+    aView = new Date(d.y, aView.getMonth(), 1);
+    period = 'year';
+    sound.play('swipe');
+    renderAnalysis();
+  };
 }
 
 $('analysisBtn').addEventListener('click', () => {
+  aView = new Date(view.getFullYear(), view.getMonth(), 1);
   for (const id of ['aIn', 'aOut', 'aBal']) $(id)._v = 0; // beim Öffnen von 0 hochzählen
   openDialog($('analysis'));
   renderAnalysis();
 });
+$('aPrev').addEventListener('click', () => analysisStep(-1));
+$('aNext').addEventListener('click', () => analysisStep(1));
 $('periodSeg').addEventListener('click', ev => { const b = ev.target.closest('[data-period]'); if (b) { sound.play('tap'); period = b.dataset.period; renderAnalysis(); } });
 $('tableToggle').addEventListener('click', () => {
   sound.play('tap');
@@ -1731,6 +1805,7 @@ const KINDS = { asset: ['Vermögen', 'Vermögenswert hinzufügen'], debt: ['Schu
 let bilanz = loadBilanz();
 let bView = new Date(view);
 let bConfirm = null;
+let bRange = 'year';
 
 function normBilanz(b) {
   return { accounts: (b?.accounts || []).map(a => ({ id: a.id, name: a.name, kind: a.kind })), values: { ...b?.values } };
@@ -1835,15 +1910,23 @@ function renderBilanzSums(animate) {
   $('bCopy').hidden = !!t || !prevValues(k);
   document.querySelectorAll('[data-sum]').forEach(el => { el.textContent = eur.format(t ? t[el.dataset.sum === 'debt' ? 'd' : 'a'] : 0); });
 
-  // Jahresverlauf
-  const data = Array.from({ length: 12 }, (_, i) => ({ y, m: i, t: totals(mkey(y, i)) }));
-  const pts = data.filter(d => d.t);
-  $('bYear').textContent = `Verlauf ${y}`;
+  // Verlauf: ein Jahr oder alles seit dem ersten Stand
+  const now = new Date(), isAll = bRange === 'all';
+  const keys = Object.keys(bilanz.values).sort();
+  const span = !isAll ? monthSpan(y, 0, y, 11)
+    : keys.length ? monthSpan(+keys[0].slice(0, 4), +keys[0].slice(5, 7) - 1, now.getFullYear(), now.getMonth()) : [];
+  const data = span.map(([yy, mm]) => ({ y: yy, m: mm, t: totals(mkey(yy, mm)) }));
+  const pts = data.map((d, i) => ({ ...d, i })).filter(d => d.t);
+  press($('bRangeSeg'), b => b.dataset.range === bRange);
+  $('bYear').textContent = !isAll ? String(y)
+    : data.length ? `${shortMonth(data[0].y, data[0].m)} ${data[0].y} – ${shortMonth(now.getFullYear(), now.getMonth())} ${now.getFullYear()}` : '';
+  $('bYPrev').disabled = !keys.length || y <= +keys[0].slice(0, 4);
+  $('bYNext').disabled = y >= now.getFullYear();
+  for (const id of ['bYPrev', 'bYNext']) $(id).style.visibility = isAll ? 'hidden' : '';
   const grow = pts.length > 1 ? pts[pts.length - 1].t.net - pts[0].t.net : 0;
   $('bGrow').textContent = pts.length > 1 ? (grow >= 0 ? '+' : '−') + eur.format(Math.abs(grow)) : '–';
-  $('bAvg').textContent = pts.length > 1 ? eur.format(grow / (pts[pts.length - 1].m - pts[0].m)) : '–';
-  // Ø Cashflow aus den Einträgen: Monate des Jahres bis heute, in denen etwas gebucht ist
-  const now = new Date();
+  $('bAvg').textContent = pts.length > 1 ? eur.format(grow / (pts[pts.length - 1].i - pts[0].i)) : '–';
+  // Ø Cashflow aus den Einträgen: Monate des Zeitraums bis heute, in denen etwas gebucht ist
   const flows = data.filter(d => new Date(d.y, d.m, 1) <= now).map(d => sumMonth(d.y, d.m)).filter(s => s.in || s.out);
   $('bCash').textContent = flows.length ? eur.format(flows.reduce((s, f) => s + f.in - f.out, 0) / flows.length) : '–';
 
@@ -1855,17 +1938,19 @@ function renderBilanzSums(animate) {
 
 function renderNetChart(data, animate) {
   const el = $('bChart');
+  const isAll = bRange === 'all', lastI = data.length - 1;
   el.classList.toggle('still', !animate);
+  el.classList.toggle('long', isAll);
   const pts = data.map((d, i) => ({ ...d, i })).filter(d => d.t);
-  if (!pts.length) { el.innerHTML = '<p class="hint" style="text-align:center;padding:28px 0">Noch kein Stand in diesem Jahr.</p>'; return; }
+  if (!pts.length) { el.innerHTML = `<p class="hint" style="text-align:center;padding:28px 0">Noch kein Stand${isAll ? '' : ' in diesem Jahr'}.</p>`; return; }
 
-  // Trendlinie (lineare Regression) über das ganze Jahr
+  // Trendlinie (lineare Regression) über den ganzen Zeitraum
   let trend = null;
   if (pts.length > 1) {
     const n = pts.length, sx = pts.reduce((s, p) => s + p.i, 0), sy = pts.reduce((s, p) => s + p.t.net, 0);
     const sxx = pts.reduce((s, p) => s + p.i * p.i, 0), sxy = pts.reduce((s, p) => s + p.i * p.t.net, 0);
     const b = (n * sxy - sx * sy) / (n * sxx - sx * sx), a = (sy - b * sx) / n;
-    trend = [a, a + b * 11];
+    trend = [a, a + b * lastI];
   }
 
   const W = el.clientWidth || 480, H = 200, padL = 38, padT = 10, padB = 24;
@@ -1882,10 +1967,15 @@ function renderNetChart(data, animate) {
     svg += `<line class="${Math.abs(t) < 1e-9 ? 'zero' : 'grid'}" x1="${padL}" x2="${W}" y1="${yS(t)}" y2="${yS(t)}"/><text x="${padL - 8}" y="${yS(t) + 4}" text-anchor="end">${axisNum(t)}</text>`;
   }
   data.forEach((d, i) => {
+    if (isAll) {
+      // Gesamt: die Jahreszahl im Januar, der angebrochene Anfang nur, wenn genug Platz bis zum nächsten Januar ist
+      if (d.m === 0 || (i === 0 && d.m <= 6)) svg += `<text x="${xS(i)}" y="${H - 6}" text-anchor="middle">${d.y}</text>`;
+      return;
+    }
     const cur = d.m === bView.getMonth();
     if (showAll || i % 2 === 0) svg += `<text class="${cur ? 'cur' : ''}" x="${xS(i)}" y="${H - 6}" text-anchor="middle">${shortMonth(d.y, d.m)}</text>`;
   });
-  if (trend) svg += `<path class="trend" d="M${xS(0)},${yS(trend[0])}L${xS(11)},${yS(trend[1])}"/>`;
+  if (trend) svg += `<path class="trend" d="M${xS(0)},${yS(trend[0])}L${xS(lastI)},${yS(trend[1])}"/>`;
   if (pts.length > 1) svg += `<path class="net" pathLength="1" d="${pts.map((p, j) => `${j ? 'L' : 'M'}${xS(p.i)},${yS(p.t.net)}`).join('')}"/>`;
   pts.forEach((p, j) => { svg += `<circle class="dot" data-dot="${p.i}" cx="${xS(p.i)}" cy="${yS(p.t.net)}" r="4" style="--d:${j}"/>`; });
   data.forEach((_, i) => { svg += `<rect class="hit" data-i="${i}" x="${padL + gw * i}" y="0" width="${gw}" height="${H}"/>`; });
@@ -1909,12 +1999,15 @@ function renderNetChart(data, animate) {
     tip.style.left = Math.min(Math.max(xS(i), half), W - half) + 'px';
   };
   el.onpointerleave = hide;
-  // Antippen springt zum Monat
+  // Antippen springt zum Monat (aus der Gesamtansicht in sein Jahr)
   el.onclick = ev => {
     const hit = ev.target.closest('[data-i]');
-    if (!hit || +hit.dataset.i === bView.getMonth()) return;
-    const dir = +hit.dataset.i > bView.getMonth() ? 'next' : 'prev';
-    bView = new Date(bView.getFullYear(), +hit.dataset.i, 1);
+    if (!hit) return;
+    const d = data[+hit.dataset.i], to = new Date(d.y, d.m, 1);
+    if (!isAll && to.getTime() === new Date(bView.getFullYear(), bView.getMonth(), 1).getTime()) return;
+    const dir = to > bView ? 'next' : 'prev';
+    bView = to;
+    bRange = 'year';
     sound.play('swipe');
     renderBilanz(dir);
   };
@@ -1936,6 +2029,15 @@ $('bilanzBtn').addEventListener('click', () => {
 });
 $('bPrev').addEventListener('click', () => bilanzMonth(-1));
 $('bNext').addEventListener('click', () => bilanzMonth(1));
+$('bYPrev').addEventListener('click', () => bilanzMonth(-12));
+$('bYNext').addEventListener('click', () => bilanzMonth(12));
+$('bRangeSeg').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-range]');
+  if (!b || b.dataset.range === bRange) return;
+  sound.play('tap');
+  bRange = b.dataset.range;
+  renderBilanzSums(true);
+});
 
 $('bCopy').addEventListener('click', () => {
   const k = mkey(bView.getFullYear(), bView.getMonth());
