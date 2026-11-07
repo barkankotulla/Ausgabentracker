@@ -1,6 +1,6 @@
 // Service Worker: App sofort aus dem Cache laden, im Hintergrund aktualisieren.
 // Bei Änderungen an der App die Version hochzählen.
-const VERSION = 'ausgaben-v12';
+const VERSION = 'ausgaben-v13';
 // Lokal beim Entwickeln immer zuerst die frische Version laden
 const DEV = ['localhost', '127.0.0.1'].includes(location.hostname);
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
