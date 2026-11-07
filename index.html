@@ -150,7 +150,7 @@
   .empty { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 0; }
 
   /* Analyse */
-  #analysis { width: min(560px, calc(100% - 32px)); }
+  #analysis { width: min(560px, calc(100% - 32px)); overflow-anchor: none; } /* sonst verschiebt der Browser beim Zuklappen die Ansicht */
   .sheet .month { margin-top: 0; }
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .tile { background: var(--bg); border-radius: 12px; padding: 10px 12px; min-width: 0; }
@@ -182,12 +182,26 @@
   .months th, .months td { text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--line); }
   .months th:first-child, .months td:first-child { text-align: left; }
   .months th { color: var(--muted); font-weight: 500; }
-  .crow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 12px; padding: 7px 0; }
+  .crow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 5px 12px; width: 100%; padding: 7px 0; text-align: left; cursor: pointer; background: var(--surface); }
+  .crow[aria-expanded="true"] { position: sticky; top: 0; z-index: 1; }
   .cname { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cval { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; }
   .cval small { color: var(--muted); font-weight: 500; margin-left: 8px; display: inline-block; min-width: 3.2em; }
-  .cbar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--bg); overflow: hidden; }
+  .cchev { color: var(--muted); line-height: 1.2; transition: transform .25s var(--ease); }
+  .crow[aria-expanded="true"] .cchev { transform: rotate(90deg); }
+  .cbar { display: block; grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--bg); overflow: hidden; }
   .cbar i { display: block; height: 100%; border-radius: 3px; }
+  .cdetail { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .3s var(--ease), opacity .2s; }
+  .cdetail > div { overflow: hidden; min-height: 0; }
+  .cdetail.open { grid-template-rows: 1fr; opacity: 1; }
+  .cdetail.still { transition: none; } /* lange Listen klappen ohne Animation auf, damit es flüssig bleibt */
+  .cent { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .cent.future { opacity: .45; }
+  .cdate { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .cnote { overflow-wrap: anywhere; }
+  .cnote .rep { margin-left: 0; }
+  .cnote .rep:not(:first-child) { margin-left: 6px; }
+  .camt { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
 
   /* Bilanz */
   #bilanz { width: min(560px, calc(100% - 32px)); }
@@ -1610,6 +1624,7 @@ setInterval(() => { if (!document.hidden) cloud.run(); }, 30000);
 
 let period = 'month';
 let aView = new Date(view.getFullYear(), view.getMonth(), 1);
+const openCats = new Set(); // aufgeklappte Kategorien als 'in|Name', bleiben beim Blättern offen
 const monthShort = new Intl.DateTimeFormat('de-DE', { month: 'short' });
 const shortMonth = (y, m) => monthShort.format(new Date(y, m, 1)).replace('.', '');
 
@@ -1705,12 +1720,59 @@ function catList(map, t) {
   const rows = [...map].sort((a, b) => b[1] - a[1]);
   if (!rows.length) return `<p class="hint">Keine ${t === 'in' ? 'Einnahmen' : 'Ausgaben'} in diesem Zeitraum.</p>`;
   const total = rows.reduce((s, r) => s + r[1], 0), max = rows[0][1];
-  return rows.map(([k, v]) => `
-    <div class="crow">
-      <span class="cname">${esc(k)}</span>
-      <span class="cval">${eur.format(v)}<small>${Math.round(v / total * 100)} %</small></span>
-      <div class="cbar"><i style="width:${(v / max * 100).toFixed(1)}%;background:var(--${t}-chart)"></i></div>
-    </div>`).join('');
+  return rows.map(([k, v]) => {
+    const open = openCats.has(t + '|' + k);
+    return `
+    <div class="cgroup">
+      <button type="button" class="crow" data-t="${t}" data-cat="${esc(k)}" aria-expanded="${open}">
+        <span class="cname">${esc(k)}</span>
+        <span class="cval">${eur.format(v)}<small>${Math.round(v / total * 100)} %</small></span>
+        <span class="cchev" aria-hidden="true">›</span>
+        <span class="cbar"><i style="width:${(v / max * 100).toFixed(1)}%;background:var(--${t}-chart)"></i></span>
+      </button>
+      <div class="cdetail${open ? ' open' : ''}"><div>${open ? catEntries(t, k).html : ''}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// Buchungen einer Kategorie im gewählten Zeitraum, neueste zuerst
+function catEntries(t, k) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const entries = state.entries.filter(e => e.type === t && (e.category || 'Ohne Kategorie') === k);
+  const rows = monthsFor(period)
+    .flatMap(([y, m]) => entries.flatMap(e => occurrencesIn(e, y, m).map(on => ({ e, on }))))
+    .sort((a, b) => b.on - a.on || b.e.created - a.e.created);
+  const html = rows.map(({ e, on }) => {
+    const date = shortFmt.format(on);
+    return `
+    <div class="cent${on > today ? ' future' : ''}">
+      <span class="cdate">${period === 'all' ? date : date.slice(0, 6)}</span>
+      <span class="cnote">${esc(e.note || '')}${e.repeat ? `<span class="rep">↻ ${repeatText(e.repeat)}</span>` : ''}</span>
+      <span class="camt">${eur.format(e.amount)}</span>
+    </div>`;
+  }).join('');
+  return { html, count: rows.length };
+}
+
+function toggleCat(ev) {
+  const head = ev.target.closest('.crow');
+  if (!head) return;
+  const { t, cat } = head.dataset, key = t + '|' + cat, detail = head.nextElementSibling;
+  const open = !openCats.has(key);
+  sound.play('tap');
+  if (open) {
+    openCats.add(key);
+    const { html, count } = catEntries(t, cat);
+    detail.firstElementChild.innerHTML = html;
+    detail.classList.toggle('still', count > 40);
+  } else {
+    openCats.delete(key);
+    // War die Liste weit gescrollt, bleibt die Kategorie beim Zuklappen an ihrem Platz oben
+    const dlg = $('analysis'), above = head.parentElement.getBoundingClientRect().top - dlg.getBoundingClientRect().top;
+    if (above < 0) dlg.scrollTop += above;
+  }
+  head.setAttribute('aria-expanded', open);
+  detail.classList.toggle('open', open);
 }
 
 const niceStep = x => { const p = 10 ** Math.floor(Math.log10(x)), f = x / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; };
@@ -1783,9 +1845,12 @@ function renderChart(data) {
 $('analysisBtn').addEventListener('click', () => {
   aView = new Date(view.getFullYear(), view.getMonth(), 1);
   for (const id of ['aIn', 'aOut', 'aBal']) $(id)._v = 0; // beim Öffnen von 0 hochzählen
+  openCats.clear();
   openDialog($('analysis'));
   renderAnalysis();
 });
+$('catOut').addEventListener('click', toggleCat);
+$('catIn').addEventListener('click', toggleCat);
 $('aPrev').addEventListener('click', () => analysisStep(-1));
 $('aNext').addEventListener('click', () => analysisStep(1));
 $('periodSeg').addEventListener('click', ev => { const b = ev.target.closest('[data-period]'); if (b) { sound.play('tap'); period = b.dataset.period; renderAnalysis(); } });
