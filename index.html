@@ -1873,7 +1873,7 @@ let bConfirm = null;
 let bRange = 'year';
 
 function normBilanz(b) {
-  return { accounts: (b?.accounts || []).map(a => ({ id: a.id, name: a.name, kind: a.kind })), values: { ...b?.values } };
+  return { accounts: (b?.accounts || []).map(a => ({ id: a.id, name: a.name, kind: a.kind, ...(a.closed ? { closed: a.closed } : {}) })), values: { ...b?.values } };
 }
 function loadBilanz() {
   try { return normBilanz(JSON.parse(localStorage.getItem(BILANZ_KEY))); } catch { return normBilanz(); }
@@ -1886,7 +1886,7 @@ function saveBilanz() {
 // Für den Sync als flache Liste: "a:<konto>" = Konto, "v:<YYYY-MM>:<konto>" = Stand
 function bilanzItems() {
   const items = new Map();
-  for (const a of bilanz.accounts) items.set('a:' + a.id, { name: a.name, kind: a.kind });
+  for (const a of bilanz.accounts) items.set('a:' + a.id, a.closed ? { name: a.name, kind: a.kind, closed: a.closed } : { name: a.name, kind: a.kind });
   for (const [k, vals] of Object.entries(bilanz.values)) for (const [id, v] of Object.entries(vals)) items.set(`v:${k}:${id}`, v);
   return items;
 }
@@ -1897,9 +1897,10 @@ function bilanzSet(key, data) {
   if (t === 'a') {
     const acc = bilanz.accounts.find(x => x.id === a);
     if (data == null) { bilanz.accounts = bilanz.accounts.filter(x => x.id !== a); return; }
-    if (acc) Object.assign(acc, { name: data.name, kind: data.kind });
-    else bilanz.accounts.push({ id: a, name: data.name, kind: data.kind });
-    return { name: data.name, kind: data.kind };
+    const nu = data.closed ? { name: data.name, kind: data.kind, closed: data.closed } : { name: data.name, kind: data.kind };
+    if (acc) { delete acc.closed; Object.assign(acc, nu); }
+    else bilanz.accounts.push({ id: a, ...nu });
+    return nu;
   }
   if (data == null || typeof data !== 'number') {
     if (bilanz.values[a]) { delete bilanz.values[a][b]; if (!Object.keys(bilanz.values[a]).length) delete bilanz.values[a]; }
@@ -1933,11 +1934,13 @@ function prevValues(k) {
 }
 
 // Angezeigt wird ein Konto, wenn es im Monat oder im Vormonat einen Stand hat oder noch ganz neu ist,
-// damit aufgelöste Konten (z. B. ein verkauftes Motorrad) nicht in jedem späteren Monat auftauchen
+// damit aufgelöste Konten (z. B. ein verkauftes Motorrad) nicht in jedem späteren Monat auftauchen.
+// Mit × beendete Konten (closed = erster Monat ohne Konto) sind ab da ganz ausgeblendet.
+const isOpen = (a, k) => !a.closed || k < a.closed;
 function visibleAccounts(k) {
   const cur = bilanz.values[k] || {}, prev = prevValues(k) || {};
   const used = new Set(Object.values(bilanz.values).flatMap(Object.keys));
-  return bilanz.accounts.filter(a => a.id in cur || a.id in prev || !used.has(a.id));
+  return bilanz.accounts.filter(a => isOpen(a, k) && (a.id in cur || a.id in prev || !used.has(a.id)));
 }
 
 function renderBilanz(slide) {
@@ -1953,7 +1956,7 @@ function renderBilanz(slide) {
         return `<div class="brow">
           <input class="bname" value="${esc(a.name)}" data-name="${a.id}" maxlength="40" aria-label="Name">
           <input class="bval" inputmode="decimal" data-val="${a.id}" value="${v == null ? '' : money(v)}" placeholder="${last == null ? '0,00' : money(last)}" aria-label="Stand">
-          <button type="button" class="del${bConfirm === a.id ? ' sure' : ''}" data-rm="${a.id}" aria-label="Konto löschen">${bConfirm === a.id ? 'Löschen' : '×'}</button>
+          <button type="button" class="del${bConfirm === a.id ? ' sure' : ''}" data-rm="${a.id}" aria-label="Konto ab diesem Monat entfernen">${bConfirm === a.id ? (hasBefore(a.id, k) ? 'Ab hier löschen' : 'Löschen') : '×'}</button>
         </div>`;
       }).join('')}
       <form class="badd" data-kind="${kind}"><input placeholder="+ ${add}" maxlength="40"></form>
@@ -2106,7 +2109,9 @@ $('bRangeSeg').addEventListener('click', ev => {
 
 $('bCopy').addEventListener('click', () => {
   const k = mkey(bView.getFullYear(), bView.getMonth());
-  bilanz.values[k] = { ...prevValues(k) };
+  const prev = prevValues(k);
+  bilanz.values[k] = Object.fromEntries(bilanz.accounts.filter(a => isOpen(a, k) && a.id in prev).map(a => [a.id, prev[a.id]]));
+  if (!Object.keys(bilanz.values[k]).length) delete bilanz.values[k];
   saveBilanz();
   sound.play('in');
   renderBilanz();
@@ -2160,15 +2165,24 @@ $('bGroups').addEventListener('submit', ev => {
   $('bGroups').querySelector(`[data-val="${id}"]`).focus();
 });
 
-// Löschen in zwei Schritten: × → „Löschen“
+// Hat das Konto Stände vor dem Monat k?
+const hasBefore = (id, k) => Object.keys(bilanz.values).some(kk => kk < k && id in bilanz.values[kk]);
+
+// Löschen in zwei Schritten: × → „Löschen“. Mit früheren Ständen endet das Konto nur ab diesem Monat
+// (getilgte Schulden, verkaufte Werte), die Historie bleibt; sonst verschwindet es ganz.
 $('bGroups').addEventListener('click', ev => {
   const b = ev.target.closest('[data-rm]');
   if (!b) { if (bConfirm) { bConfirm = null; renderBilanz(); } return; }
   const id = b.dataset.rm;
   if (bConfirm !== id) { bConfirm = id; sound.play('tap'); renderBilanz(); return; }
   bConfirm = null;
-  bilanz.accounts = bilanz.accounts.filter(a => a.id !== id);
-  for (const k of Object.keys(bilanz.values)) { delete bilanz.values[k][id]; if (!Object.keys(bilanz.values[k]).length) delete bilanz.values[k]; }
+  const from = mkey(bView.getFullYear(), bView.getMonth());
+  if (hasBefore(id, from)) bilanz.accounts.find(a => a.id === id).closed = from;
+  else bilanz.accounts = bilanz.accounts.filter(a => a.id !== id);
+  for (const k of Object.keys(bilanz.values)) {
+    if (k < from) continue;
+    delete bilanz.values[k][id]; if (!Object.keys(bilanz.values[k]).length) delete bilanz.values[k];
+  }
   saveBilanz();
   sound.play('delete');
   renderBilanz();
