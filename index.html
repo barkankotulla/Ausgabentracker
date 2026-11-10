@@ -24,6 +24,7 @@
     --in: #088556; --out: #d42f45; --in-bg: #e2f6ed; --out-bg: #fde8ea; --in-line: #b5e6d1; --out-line: #f9cbd1;
     --field: rgb(255 255 255 / .7); --key: rgb(255 255 255 / .8); --in-chart: #12a26c; --out-chart: #e4485b; --on-tone: #fff;
     --radius: 14px;
+    --note: #c97a00; --bal: #2563eb; /* Akzente der Knöpfe oben: Notizen, Bilanz */
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -31,6 +32,7 @@
       --bg: #0b0d10; --surface: #171a1f; --text: #f6f8fa; --muted: #929ba7; --line: #272b32;
       --in: #2ecb8a; --out: #f4606d; --in-bg: #0c2a1e; --out-bg: #331419; --in-line: #17523b; --out-line: #6b2630;
       --field: rgb(255 255 255 / .05); --key: rgb(255 255 255 / .07); --in-chart: #27bd7f; --out-chart: #ec5361; --on-tone: #0b0d10;
+      --note: #f5b83d; --bal: #6aa5ff;
     }
   }
   :root[data-theme="dark"] {
@@ -38,6 +40,7 @@
     --bg: #0b0d10; --surface: #171a1f; --text: #f6f8fa; --muted: #929ba7; --line: #272b32;
     --in: #2ecb8a; --out: #f4606d; --in-bg: #0c2a1e; --out-bg: #331419; --in-line: #17523b; --out-line: #6b2630;
     --field: rgb(255 255 255 / .05); --key: rgb(255 255 255 / .07); --in-chart: #27bd7f; --out-chart: #ec5361; --on-tone: #0b0d10;
+    --note: #f5b83d; --bal: #6aa5ff;
   }
   * { box-sizing: border-box; margin: 0; }
   [hidden] { display: none !important; }
@@ -60,6 +63,18 @@
   /* Kopfzeile */
   .top { display: flex; align-items: center; gap: 4px; min-height: 36px; }
   .top .spacer { margin-right: auto; }
+  .top { gap: 8px; }
+  .top .icon { width: 38px; height: 38px; border-radius: 12px; background: var(--surface); color: var(--muted); }
+  .top .icon:hover { color: var(--text); }
+  .top .icon.tint { color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+  .top .icon.tint:hover { background: color-mix(in srgb, var(--c) 22%, transparent); }
+  .top .icon svg { width: 19px; height: 19px; stroke-width: 2; }
+
+  /* Notizen */
+  #notes { width: min(560px, calc(100% - 32px)); }
+  .notes { width: 100%; min-height: min(56dvh, 460px); resize: none; border: 0; outline: none; border-radius: 12px; background: var(--bg); color: var(--text); padding: 14px 16px; font: inherit; font-size: 15px; line-height: 1.6; }
+  @supports (field-sizing: content) { .notes { field-sizing: content; } }
+  .notes::placeholder { color: var(--muted); }
   .icon { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); transition: background .15s, color .15s; }
   .icon:hover { background: var(--line); color: var(--text); }
   .icon:disabled { opacity: .25; pointer-events: none; }
@@ -258,7 +273,7 @@
   }
   /* Touch: 16px verhindert das automatische Hineinzoomen beim Antippen von Feldern */
   @media (pointer: coarse) {
-    .field, .inline input, .inline select, .brow input, .badd input { font-size: 16px; }
+    .field, .inline input, .inline select, .brow input, .badd input, .notes { font-size: 16px; }
     .keypad button { height: 48px; }
     .del { width: 40px; height: 40px; }
   }
@@ -355,10 +370,13 @@
 <main>
   <div class="top">
     <span class="spacer"></span>
-    <button class="icon" id="analysisBtn" aria-label="Analyse">
+    <button class="icon tint" id="notesBtn" aria-label="Notizen" style="--c:var(--note)">
+      <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>
+    </button>
+    <button class="icon tint" id="analysisBtn" aria-label="Analyse" style="--c:var(--in)">
       <svg viewBox="0 0 24 24"><path d="M6 20v-8M12 20V5M18 20v-5"/></svg>
     </button>
-    <button class="icon" id="bilanzBtn" aria-label="Bilanz">
+    <button class="icon tint" id="bilanzBtn" aria-label="Bilanz" style="--c:var(--bal)">
       <svg viewBox="0 0 24 24"><path d="M12 4v16M8 20h8M5 7h14M5 7l-2.5 6a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z"/></svg>
     </button>
     <button class="icon" id="themeBtn" aria-label="Hell / Dunkel"></button>
@@ -453,6 +471,17 @@
 </main>
 
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastUndo">Rückgängig</button></div>
+
+<dialog id="notes">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2>Notizen</h2>
+      <button class="icon" data-close aria-label="Schließen">✕</button>
+    </div>
+    <textarea class="notes" id="notesText" placeholder="Gedanken, Pläne, Merkzettel …" aria-label="Notizen"></textarea>
+    <p class="hint">Speichert automatisch</p>
+  </div>
+</dialog>
 
 <dialog id="analysis">
   <div class="sheet">
@@ -606,6 +635,7 @@
 const KEY = 'ausgaben.data';
 const BACKUP_KEY = 'ausgaben.backups';
 const THEME_KEY = 'ausgaben.theme';
+const NOTES_KEY = 'ausgaben.notes';
 const MAX_SNAPSHOTS = 20;
 const PRESETS = { weekly: { n: 1, unit: 'week' }, monthly: { n: 1, unit: 'month' }, yearly: { n: 1, unit: 'year' } };
 const UNIT = { day: ['täglich', 'Tage'], week: ['wöchentlich', 'Wochen'], month: ['monatlich', 'Monate'], year: ['jährlich', 'Jahre'] };
@@ -622,6 +652,8 @@ const ICON_MOON = '<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.
 const ICON_SUN = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
 
 let state = load();
+const loadNotes = () => { try { return localStorage.getItem(NOTES_KEY) || ''; } catch { return ''; } };
+let notes = loadNotes();
 let type = 'out';
 let editingId = null;
 let pendingDel = null;
@@ -780,12 +812,13 @@ function save() {
 
 // Änderung mit Rückgängig-Möglichkeit
 function withUndo(msg, fn, reviveId) {
-  const prev = JSON.stringify(state), prevBilanz = JSON.stringify(bilanz);
+  const prev = JSON.stringify(state), prevBilanz = JSON.stringify(bilanz), prevNotes = notes;
   fn();
   save(); render(); renderChips();
   toast(msg, () => {
     state = normalize(JSON.parse(prev));
     if (JSON.stringify(bilanz) !== prevBilanz) { bilanz = normBilanz(JSON.parse(prevBilanz)); saveBilanz(); }
+    if (notes !== prevNotes) setNotes(prevNotes);
     justAdded = reviveId;
     sound.play('undo');
     save(); render(); renderChips();
@@ -1229,11 +1262,11 @@ function readSnapshots() {
   try { return JSON.parse(localStorage.getItem(BACKUP_KEY)) || []; } catch { return []; }
 }
 
-// Alles, was gesichert wird: Einträge, Kategorien und Bilanz
-const backupData = () => ({ ...state, bilanz });
+// Alles, was gesichert wird: Einträge, Kategorien, Bilanz und Notizen
+const backupData = () => ({ ...state, bilanz, notes });
 
 function snapshot() {
-  if (!state.entries.length && !bilanz.accounts.length) return;
+  if (!state.entries.length && !bilanz.accounts.length && !notes) return;
   const list = readSnapshots();
   const data = JSON.stringify(backupData());
   if (list[0]?.data === data) return;
@@ -1261,7 +1294,11 @@ function restore(data, msg) {
   sound.play('in');
   snapshot();
   // ältere Sicherungen ohne Bilanz lassen die aktuelle Bilanz stehen
-  withUndo(msg, () => { state = next; if (data.bilanz) { bilanz = normBilanz(data.bilanz); saveBilanz(); } });
+  withUndo(msg, () => {
+    state = next;
+    if (data.bilanz) { bilanz = normBilanz(data.bilanz); saveBilanz(); }
+    if (typeof data.notes === 'string') setNotes(data.notes);
+  });
   resetForm();
   renderBackup(); renderCats();
 }
@@ -1313,7 +1350,7 @@ const cloud = (() => {
   const read = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
   const write = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   // cursor/synced auf oberster Ebene gehören zur Tabelle entries (so schon in v1 gespeichert)
-  const emptySync = () => ({ cursor: null, synced: {}, cats: null, bilanz: { cursor: null, synced: {} } });
+  const emptySync = () => ({ cursor: null, synced: {}, cats: null, notes: null, bilanz: { cursor: null, synced: {} } });
 
   let auth = read(AUTH_KEY);
   let sync = read(SYNC_KEY) || emptySync();
@@ -1421,7 +1458,7 @@ const cloud = (() => {
   async function pull() {
     for (const t of TABLES) await pullTable(t);
     let changed = false;
-    const [row] = await call('/rest/v1/user_settings?select=cats');
+    const [row] = await call('/rest/v1/user_settings?select=cats,notes');
     if (row) {
       const remote = JSON.stringify(row.cats);
       if (sync.cats === null) {
@@ -1433,6 +1470,15 @@ const cloud = (() => {
         state.cats = { out: [...(row.cats.out || [])], in: [...(row.cats.in || [])] };
         sync.cats = remote;
         changed = true;
+      }
+      // Notizen: lokal unverändert -> Stand vom Server; erste Anmeldung -> beide zusammenführen
+      const rn = row.notes || '';
+      if (sync.notes == null) {
+        if (rn && rn !== notes) setNotes(notes ? rn + '\n\n' + notes : rn, true);
+        sync.notes = rn;
+      } else if (notes === sync.notes && rn !== sync.notes) {
+        setNotes(rn, true);
+        sync.notes = rn;
       }
     }
     write(SYNC_KEY, sync);
@@ -1466,6 +1512,14 @@ const cloud = (() => {
         method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: { cats: state.cats },
       });
       sync.cats = cats;
+      write(SYNC_KEY, sync);
+    }
+    if (notes !== sync.notes) {
+      const n = notes;
+      await call('/rest/v1/user_settings?on_conflict=user_id', {
+        method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: { notes: n },
+      });
+      sync.notes = n;
       write(SYNC_KEY, sync);
     }
   }
@@ -1512,6 +1566,7 @@ const cloud = (() => {
     sync = (a && read(SYNC_KEY)) || emptySync();
     state = load();
     bilanz = loadBilanz();
+    setNotes(loadNotes(), true);
     render(); renderChips(); renderSync();
     run();
   }
@@ -1608,8 +1663,8 @@ $('signOut').addEventListener('click', async () => {
   if (cloud.status !== 'idle') { sound.play('error'); toast('Abmelden geht erst, wenn alles synchronisiert ist'); return; }
   sound.play('close');
   await cloud.signOut();
-  state = normalize({}); bilanz = normBilanz();
-  for (const k of [KEY, BILANZ_KEY, BACKUP_KEY]) try { localStorage.removeItem(k); } catch {}
+  state = normalize({}); bilanz = normBilanz(); setNotes('', true);
+  for (const k of [KEY, BILANZ_KEY, BACKUP_KEY, NOTES_KEY]) try { localStorage.removeItem(k); } catch {}
   resetForm(); render(); renderChips(); renderCats(); renderBackup();
   toast('Abgemeldet, Daten sind in deinem Konto');
 });
@@ -2195,6 +2250,31 @@ $('bTableToggle').addEventListener('click', () => {
   $('bTableToggle').textContent = show ? 'Diagramm' : 'Tabelle';
 });
 addEventListener('resize', () => { if ($('bilanz').open) renderBilanzSums(false); });
+
+/* ---------- Notizen ---------- */
+
+// Ein freier Text: speichert bei jedem Tastendruck lokal und gleicht sich mit dem Konto ab.
+// quiet = Änderung kommt von außen (Sync, Abmelden), also nicht erneut hochladen anstoßen
+function setNotes(text, quiet) {
+  notes = text;
+  try { text ? localStorage.setItem(NOTES_KEY, text) : localStorage.removeItem(NOTES_KEY); } catch {}
+  const ta = $('notesText');
+  if (ta.value !== text) {
+    const pos = Math.min(ta.selectionStart, text.length);
+    ta.value = text;
+    if (document.activeElement === ta) ta.setSelectionRange(pos, pos);
+  }
+  if (!quiet) cloud.schedule();
+}
+
+$('notesBtn').addEventListener('click', () => {
+  const ta = $('notesText');
+  ta.value = notes;
+  openDialog($('notes'));
+  // auf dem Handy nicht gleich die Tastatur aufklappen, am Rechner direkt lostippen
+  if (!matchMedia('(pointer: coarse)').matches) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+});
+$('notesText').addEventListener('input', ev => setNotes(ev.target.value));
 
 /* ---------- Einstellungen ---------- */
 
