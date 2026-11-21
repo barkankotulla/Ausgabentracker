@@ -26,7 +26,7 @@
     /* Flächen: Seite, Container-Stufen, verschachtelt */
     --bg: #ffffff; --surface: #f7f7f7; --sc: #f2f2f2; --c-high: #e9e9e9; --nest: #ffffff; --pressed: #dcdcdc; --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%235c5c5c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --text: #111111; --muted: #5c5c5c; --line: #e3e3e3; --accent: #111111;
-    --tert: #0b57d0; --tert-c: #d3e3fd; --on-tert-c: #041e49;
+    --tert: #0b57d0; --on-tert: #ffffff; --tert-c: #d3e3fd; --on-tert-c: #041e49;
     --in: #0b7d50; --out: #c9353a; --in-bg: #dff2e6; --out-bg: #fbe5e3; --in-line: #b6dfc6; --out-line: #f0c6c1;
     --field: #ffffff; --key: #ffffff; --in-chart: #15a06a; --out-chart: #e24f50; --on-tone: #ffffff;
     --note: #c97a00; --bal: #0b57d0;
@@ -41,7 +41,7 @@
       color-scheme: dark;
       --bg: #0e0e0e; --surface: #1b1b1b; --sc: #1b1b1b; --c-high: #2b2b2b; --nest: #262626; --pressed: #3a3a3a; --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%23a8a8a8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       --text: #ededed; --muted: #a8a8a8; --line: #2e2e2e; --accent: #f2f2f2;
-      --tert: #a8c7fa; --tert-c: #0842a0; --on-tert-c: #d3e3fd;
+      --tert: #a8c7fa; --on-tert: #062e6f; --tert-c: #0842a0; --on-tert-c: #d3e3fd;
       --in: #3ccb8f; --out: #f2716b; --in-bg: #0f2a1e; --out-bg: #341918; --in-line: #1c4f38; --out-line: #6a2b28;
       --field: #262626; --key: #262626; --in-chart: #2bbb7d; --out-chart: #ea5956; --on-tone: #0e0e0e;
       --note: #f5b83d; --bal: #a8c7fa;
@@ -52,7 +52,7 @@
     color-scheme: dark;
     --bg: #0e0e0e; --surface: #1b1b1b; --sc: #1b1b1b; --c-high: #2b2b2b; --nest: #262626; --pressed: #3a3a3a; --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%23a8a8a8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --text: #ededed; --muted: #a8a8a8; --line: #2e2e2e; --accent: #f2f2f2;
-    --tert: #a8c7fa; --tert-c: #0842a0; --on-tert-c: #d3e3fd;
+    --tert: #a8c7fa; --on-tert: #062e6f; --tert-c: #0842a0; --on-tert-c: #d3e3fd;
     --in: #3ccb8f; --out: #f2716b; --in-bg: #0f2a1e; --out-bg: #341918; --in-line: #1c4f38; --out-line: #6a2b28;
     --field: #262626; --key: #262626; --in-chart: #2bbb7d; --out-chart: #ea5956; --on-tone: #0e0e0e;
     --note: #f5b83d; --bal: #a8c7fa;
@@ -80,7 +80,7 @@
   }
   main {
     max-width: 520px; margin: 0 auto;
-    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(120px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   }
   button, input, select, textarea { font: inherit; color: inherit; }
   button { cursor: pointer; background: none; border: 0; }
@@ -119,8 +119,7 @@
   /* Formular: neutrale Karte, der Typ zeigt sich an Betrag, Auswahl und Knopf */
   #form {
     --tone: var(--out); --tone-bg: var(--out-bg); --tone-line: var(--out-line);
-    margin: var(--space-3) 0; background: var(--sc); border-radius: var(--r-lg);
-    padding: var(--space-2); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-1);
+    padding: var(--space-3); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-1);
   }
   #form[data-type="in"] { --tone: var(--in); --tone-bg: var(--in-bg); --tone-line: var(--in-line); }
   /* Verbundene Knopfgruppe statt Segmented Button */
@@ -285,7 +284,7 @@
   /* Schmale Bildschirme: Datum | Wiederholung, darunter Kategorie mit den Vorschlägen direkt darunter */
   @media (max-width: 480px) {
     .balance { font-size: 46px; }
-    #form { padding: 12px; border-radius: 24px; }
+    #form { padding: 0 var(--space-2) var(--space-2); }
     .row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     #category { grid-column: 1 / -1; order: 1; }
     .row2 { grid-template-columns: minmax(0, 1fr); }
@@ -395,6 +394,58 @@
   .snap small { color: var(--muted); margin-left: 6px; }
   .snap button { font-size: 13px; font-weight: 500; color: var(--text); min-height: 32px; padding: 0 12px; border-radius: 999px; }
 
+  /* Eingabe-Sheet: am Handy von unten (Bottom Sheet mit Griff zum Wegziehen), am Rechner mittig */
+  #entry { width: min(520px, calc(100% - 32px)); }
+  .grab { display: none; }
+  @media (max-width: 600px) {
+    #entry { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: var(--r-lg) var(--r-lg) 0 0; max-height: calc(100dvh - 16px); padding-bottom: env(safe-area-inset-bottom); }
+    .grab { display: grid; place-items: center; height: 28px; margin: 0 calc(-1 * var(--space-2)); touch-action: none; cursor: grab; }
+    .grab i { width: 32px; height: 4px; border-radius: 2px; background: var(--outline, var(--muted)); opacity: .5; }
+    #entry[open] { animation: sheetIn .435s var(--ease); }
+    #entry.closing { animation: sheetOut .2s var(--fx) forwards; }
+    #entry.dragging { animation: none; transition: none; }
+  }
+  @keyframes sheetIn { from { transform: translateY(100%); } }
+  @keyframes sheetOut { to { transform: translateY(100%); } }
+
+  /* Schwebende Leiste unten: Ausgabe | Einnahme */
+  .fab-bar {
+    position: fixed; z-index: 5; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    display: flex; gap: var(--space-1); padding: var(--space-1); width: min(400px, calc(100% - 32px));
+    background: var(--sc); border-radius: 999px; box-shadow: var(--shadow);
+  }
+  .fab { flex: 1; display: flex; align-items: center; justify-content: center; gap: var(--space-1); min-height: 56px; border-radius: 999px; font-size: 16px; font-weight: 650; color: var(--on-tone); }
+  .fab span { font-size: 24px; line-height: 1; font-weight: 500; margin-top: -2px; }
+  .fab.out { background: var(--out); }
+  .fab.in { background: var(--in); }
+  .fab { transition: transform .36s var(--spring), border-radius .36s var(--spring), filter .15s var(--fx); }
+  .fab:active { transform: scale(.95); border-radius: 18px; transition-duration: .1s; transition-timing-function: var(--fx); }
+
+  /* Bilanz-Erinnerung: bleibt stehen, bis sie abgehakt ist */
+  .due {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px var(--space-2); align-items: center;
+    margin-top: var(--space-2); padding: var(--space-2); border-radius: var(--radius);
+    background: var(--tert-c); color: var(--on-tert-c); animation: dueIn .6s var(--ease);
+  }
+  .due svg, .btn.done svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .due-icon { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--tert); color: var(--on-tert); animation: ring 4s 1s infinite; }
+  .due-icon svg { width: 22px; height: 22px; stroke-width: 1.7; }
+  .due-text b { display: block; font-size: 16px; font-weight: 650; letter-spacing: -.01em; }
+  .due-text span { display: block; font-size: 13px; opacity: .85; }
+  .due-actions { grid-column: 1 / -1; display: flex; gap: var(--space-1); }
+  .due-actions button { flex: 1; min-height: 44px; border-radius: 999px; font-weight: 650; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .due-go { background: var(--tert); color: var(--on-tert); }
+  .due-check { background: color-mix(in srgb, var(--on-tert-c) 12%, transparent); color: var(--on-tert-c); }
+  .due-actions button { transition: transform .36s var(--spring), border-radius .36s var(--spring), background .15s var(--fx); }
+  .due-actions button:active { transform: scale(.95); border-radius: 12px; transition-duration: .1s; transition-timing-function: var(--fx); }
+  .due.bye { overflow: hidden; height: 0 !important; margin-top: 0; padding-top: 0; padding-bottom: 0; opacity: 0; transform: scale(.96);
+    transition: height .3s var(--fx), margin .3s var(--fx), padding .3s var(--fx), opacity .2s var(--fx), transform .3s var(--fx); }
+  @keyframes dueIn { 0% { opacity: 0; transform: translateY(-8px) scale(.96); } 60% { transform: translateY(0) scale(1.01); } 70%, 90% { transform: rotate(-.6deg); } 80% { transform: rotate(.6deg); } }
+  @keyframes ring { 0%, 12%, 100% { transform: none; } 2%, 6% { transform: rotate(-12deg); } 4%, 8% { transform: rotate(12deg); } 10% { transform: rotate(-4deg); } }
+  /* Punkt am Bilanz-Knopf oben, solange die Bilanz fällig ist */
+  #bilanzBtn.badge::before { content: ''; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; border-radius: 50%; background: var(--tert); box-shadow: 0 0 0 2px var(--bg); }
+  .btn.done { justify-self: stretch; justify-content: center; gap: var(--space-1); min-height: 48px; background: var(--tert-c); color: var(--on-tert-c); font-weight: 650; }
+
   /* Hover nur mit Maus: auf dem Handy bliebe der Zustand nach dem Antippen sonst hängen */
   @media (hover: hover) {
     .icon:hover { background: var(--c-high); color: var(--text); }
@@ -429,6 +480,20 @@
     </button>
   </div>
 
+  <section class="due" id="due" hidden>
+    <div class="due-icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M8 20h8M5 7h14M5 7l-2.5 6a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z"/></svg></div>
+    <div class="due-text">
+      <b id="dueTitle">Bilanz ist fällig</b>
+      <span>Trag die aktuellen Kontostände ein und hak es dann ab.</span>
+    </div>
+    <div class="due-actions">
+      <button type="button" class="due-go" id="dueGo">Eintragen</button>
+      <button type="button" class="due-check" id="dueCheck">
+        <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Erledigt
+      </button>
+    </div>
+  </section>
+
   <header>
     <div class="month">
       <button class="icon" id="prev" aria-label="Vorheriger Monat">‹</button>
@@ -442,77 +507,87 @@
     </div>
   </header>
 
-  <form id="form" data-type="out" autocomplete="off">
-    <div class="seg" id="typeSeg">
-      <button type="button" data-type="out" aria-pressed="true">Ausgabe</button>
-      <button type="button" data-type="in" aria-pressed="false">Einnahme</button>
-    </div>
-    <div class="amount-wrap">
-      <input class="amount" id="amount" inputmode="decimal" placeholder="0,00 €" autofocus>
-      <span class="preview" id="preview"></span>
-    </div>
-    <div class="reveal" id="keypadWrap" inert><div>
-    <div class="keypad" id="keypad">
-      <button type="button" data-k="C" class="op">C</button>
-      <button type="button" data-k="÷" class="op">÷</button>
-      <button type="button" data-k="×" class="op">×</button>
-      <button type="button" data-k="back" class="op" aria-label="Zurück">⌫</button>
-      <button type="button" data-k="7">7</button>
-      <button type="button" data-k="8">8</button>
-      <button type="button" data-k="9">9</button>
-      <button type="button" data-k="−" class="op">−</button>
-      <button type="button" data-k="4">4</button>
-      <button type="button" data-k="5">5</button>
-      <button type="button" data-k="6">6</button>
-      <button type="button" data-k="+" class="op">+</button>
-      <button type="button" data-k="1">1</button>
-      <button type="button" data-k="2">2</button>
-      <button type="button" data-k="3">3</button>
-      <button type="button" data-k="=" class="eq">=</button>
-      <button type="button" data-k="0" class="zero">0</button>
-      <button type="button" data-k=",">,</button>
-    </div>
-    </div></div>
-    <div class="row">
-      <input class="field" id="date" type="date" required>
-      <input class="field" id="category" placeholder="Kategorie" maxlength="40">
-      <select class="field" id="repeat">
-        <option value="">Einmalig</option>
-        <option value="weekly">Wöchentlich</option>
-        <option value="monthly">Monatlich</option>
-        <option value="yearly">Jährlich</option>
-        <option value="custom">Individuell …</option>
-      </select>
-    </div>
-    <div class="chips" id="chips" hidden></div>
-    <div class="reveal" id="repeatExtra" inert><div>
-    <div class="row2">
-      <label class="field inline" id="customWrap" hidden>
-        <span>Alle</span>
-        <input id="every" type="number" min="1" max="999" value="2">
-        <select id="unit">
-          <option value="day">Tage</option>
-          <option value="week">Wochen</option>
-          <option value="month" selected>Monate</option>
-          <option value="year">Jahre</option>
-        </select>
-      </label>
-      <label class="field inline">
-        <span>Endet am</span>
-        <input id="until" type="date">
-      </label>
-    </div>
-    </div></div>
-    <input class="field" id="note" placeholder="Bemerkung">
-    <div class="actions">
-      <button class="ghost" id="cancel" type="button" hidden>Abbrechen</button>
-      <button class="ghost" id="delEdit" type="button" hidden>Löschen</button>
-      <button class="save" id="save" type="submit">Hinzufügen</button>
-    </div>
-  </form>
 
   <section id="list"></section>
 </main>
+
+<!-- Schwebende Leiste: direkt zur Eingabe -->
+<div class="fab-bar" id="fabBar">
+  <button type="button" class="fab out" data-new="out"><span>−</span>Ausgabe</button>
+  <button type="button" class="fab in" data-new="in"><span>+</span>Einnahme</button>
+</div>
+
+<dialog id="entry" class="bottom" aria-label="Eintrag">
+    <form id="form" data-type="out" autocomplete="off">
+      <div class="grab" id="grab" aria-hidden="true"><i></i></div>
+      <div class="seg" id="typeSeg">
+        <button type="button" data-type="out" aria-pressed="true">Ausgabe</button>
+        <button type="button" data-type="in" aria-pressed="false">Einnahme</button>
+      </div>
+      <div class="amount-wrap">
+        <input class="amount" id="amount" inputmode="decimal" placeholder="0,00 €">
+        <span class="preview" id="preview"></span>
+      </div>
+      <div class="reveal" id="keypadWrap" inert><div>
+      <div class="keypad" id="keypad">
+        <button type="button" data-k="C" class="op">C</button>
+        <button type="button" data-k="÷" class="op">÷</button>
+        <button type="button" data-k="×" class="op">×</button>
+        <button type="button" data-k="back" class="op" aria-label="Zurück">⌫</button>
+        <button type="button" data-k="7">7</button>
+        <button type="button" data-k="8">8</button>
+        <button type="button" data-k="9">9</button>
+        <button type="button" data-k="−" class="op">−</button>
+        <button type="button" data-k="4">4</button>
+        <button type="button" data-k="5">5</button>
+        <button type="button" data-k="6">6</button>
+        <button type="button" data-k="+" class="op">+</button>
+        <button type="button" data-k="1">1</button>
+        <button type="button" data-k="2">2</button>
+        <button type="button" data-k="3">3</button>
+        <button type="button" data-k="=" class="eq">=</button>
+        <button type="button" data-k="0" class="zero">0</button>
+        <button type="button" data-k=",">,</button>
+      </div>
+      </div></div>
+      <div class="row">
+        <input class="field" id="date" type="date" required>
+        <input class="field" id="category" placeholder="Kategorie" maxlength="40">
+        <select class="field" id="repeat">
+          <option value="">Einmalig</option>
+          <option value="weekly">Wöchentlich</option>
+          <option value="monthly">Monatlich</option>
+          <option value="yearly">Jährlich</option>
+          <option value="custom">Individuell …</option>
+        </select>
+      </div>
+      <div class="chips" id="chips" hidden></div>
+      <div class="reveal" id="repeatExtra" inert><div>
+      <div class="row2">
+        <label class="field inline" id="customWrap" hidden>
+          <span>Alle</span>
+          <input id="every" type="number" min="1" max="999" value="2">
+          <select id="unit">
+            <option value="day">Tage</option>
+            <option value="week">Wochen</option>
+            <option value="month" selected>Monate</option>
+            <option value="year">Jahre</option>
+          </select>
+        </label>
+        <label class="field inline">
+          <span>Endet am</span>
+          <input id="until" type="date">
+        </label>
+      </div>
+      </div></div>
+      <input class="field" id="note" placeholder="Bemerkung">
+      <div class="actions">
+        <button class="ghost" id="cancel" type="button" hidden>Abbrechen</button>
+        <button class="ghost" id="delEdit" type="button" hidden>Löschen</button>
+        <button class="save" id="save" type="submit">Hinzufügen</button>
+      </div>
+    </form>
+</dialog>
 
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastUndo">Rückgängig</button></div>
 
@@ -580,6 +655,7 @@
     <p class="delta" id="bDelta"></p>
     <button class="btn" id="bCopy" hidden>Stand vom Vormonat übernehmen</button>
     <div id="bGroups" style="display:grid;gap:8px"></div>
+    <button class="btn done" id="bDone" hidden><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span></span></button>
 
     <h3>Verlauf</h3>
     <div class="seg" id="bRangeSeg">
@@ -835,12 +911,14 @@ function openDialog(d) {
   sound.play('open');
 }
 
-function closeDialog(d) {
+function closeDialog(d, quiet) {
   if (!d.open || d.classList.contains('closing')) return;
-  sound.play('close');
-  if (reduced.matches) return d.close();
+  if (!quiet) sound.play('close');
+  // onClosed läuft direkt nach dem Schließen (das close-Ereignis kommt im Browser teils verspätet)
+  const done = () => { d.classList.remove('closing'); d.close(); d.onClosed?.(); };
+  if (reduced.matches) return done();
   d.classList.add('closing');
-  setTimeout(() => { d.classList.remove('closing'); d.close(); }, 180);
+  d._closeT = setTimeout(done, 180);
 }
 
 /* ---------- Daten ---------- */
@@ -1070,8 +1148,23 @@ function resetForm() {
   setType(type);
   syncRepeatUI();
   $('save').textContent = 'Hinzufügen';
-  $('cancel').hidden = $('delEdit').hidden = true;
-  $('amount').focus();
+  $('cancel').hidden = false;
+  $('delEdit').hidden = true;
+}
+
+// Eingabe-Sheet öffnen: neuer Eintrag (t = 'out' | 'in') oder Bearbeiten (id); Betrag sofort bereit
+function openEntry(t, id) {
+  const d = $('entry');
+  // wird das Sheet gerade noch geschlossen: abbrechen und offen lassen
+  if (d.classList.contains('closing')) { clearTimeout(d._closeT); d.classList.remove('closing'); }
+  if (id) startEdit(id);
+  else { resetForm(); setType(t); }
+  if (!d.open) openDialog(d);
+  $('entry').scrollTop = 0;
+  amount.focus();
+  const end = amount.value.length;
+  amount.setSelectionRange(end, end);
+  if (matchMedia('(pointer: coarse)').matches) showPad(true);
 }
 
 function startEdit(id) {
@@ -1086,9 +1179,8 @@ function startEdit(id) {
   setType(e.type);
   updatePreview();
   $('save').textContent = 'Speichern';
-  $('cancel').hidden = $('delEdit').hidden = false;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  $('amount').focus();
+  $('cancel').hidden = true;
+  $('delEdit').hidden = false;
 }
 
 function deleteEntry(id) {
@@ -1104,7 +1196,7 @@ $('typeSeg').addEventListener('click', ev => {
   if (!b) return;
   if (b.dataset.type !== type) sound.play('toggle');
   setType(b.dataset.type);
-  $('amount').focus();
+  amount.focus();
 });
 
 $('form').addEventListener('submit', ev => {
@@ -1137,12 +1229,45 @@ $('form').addEventListener('submit', ev => {
   replay($('save'), 'pop');
   save();
   const d = parseISO(data.date); view = new Date(d.getFullYear(), d.getMonth(), 1);
-  resetForm();
+  closeDialog($('entry'), true);
   render();
 });
 
-$('cancel').addEventListener('click', () => { sound.play('tap'); resetForm(); });
-$('delEdit').addEventListener('click', () => deleteEntry(editingId));
+$('cancel').addEventListener('click', () => closeDialog($('entry')));
+$('delEdit').addEventListener('click', () => { const id = editingId; closeDialog($('entry')); deleteEntry(id); });
+// Formular erst leeren, wenn das Sheet ganz zu ist (sonst sieht man es beim Schließen springen)
+$('entry').onClosed = () => { showPad(false); resetForm(); };
+$('fabBar').addEventListener('click', ev => { const b = ev.target.closest('[data-new]'); if (b) openEntry(b.dataset.new); });
+
+// Am Handy: Sheet am Griff nach unten wegziehen
+{
+  const d = $('entry'), grab = $('grab');
+  let y0 = null, dy = 0, t0 = 0;
+  grab.addEventListener('pointerdown', ev => { y0 = ev.clientY; dy = 0; t0 = performance.now(); grab.setPointerCapture(ev.pointerId); d.classList.add('dragging'); });
+  grab.addEventListener('pointermove', ev => {
+    if (y0 == null) return;
+    dy = Math.max(0, ev.clientY - y0);
+    d.style.transform = `translateY(${dy}px)`;
+  });
+  const end = () => {
+    if (y0 == null) return;
+    y0 = null;
+    d.classList.remove('dragging');
+    const fast = dy / Math.max(1, performance.now() - t0) > .5;
+    if (dy > 100 || (fast && dy > 30)) {
+      d.style.transition = 'transform .2s var(--fx)';
+      d.style.transform = 'translateY(100%)';
+      sound.play('close');
+      setTimeout(() => { d.close(); d.style.transition = d.style.transform = ''; d.onClosed(); }, 200);
+    } else {
+      d.style.transition = 'transform .36s var(--spring)';
+      d.style.transform = '';
+      setTimeout(() => { d.style.transition = ''; }, 360);
+    }
+  };
+  grab.addEventListener('pointerup', end);
+  grab.addEventListener('pointercancel', end);
+}
 $('repeat').addEventListener('change', () => { sound.play('tap'); syncRepeatUI(); });
 $('category').addEventListener('input', renderChips);
 $('chips').addEventListener('click', ev => {
@@ -1191,7 +1316,7 @@ $('list').addEventListener('click', ev => {
     deleteEntry(ds.delAll);
   } else if (pendingDel) {
     pendingDel = null; render();
-  } else { sound.play('tap'); startEdit(ds.id); }
+  } else openEntry(null, ds.id);
 });
 
 const changeMonth = dir => {
@@ -1206,9 +1331,13 @@ $('next').addEventListener('click', () => changeMonth(1));
 document.addEventListener('keydown', ev => {
   if (ev.key === 'Escape') {
     if (pendingDel) { pendingDel = null; render(); }
-    else if (editingId) resetForm();
   }
   if (ev.target.matches('input, select, textarea') || document.querySelector('dialog[open]')) return;
+  if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  // Am Rechner direkt lostippen: Ziffer oder − öffnet eine Ausgabe, + eine Einnahme
+  if (ev.key === '+') { ev.preventDefault(); openEntry('in'); }
+  else if (ev.key === '-') { ev.preventDefault(); openEntry('out'); }
+  else if (/^[0-9]$/.test(ev.key)) { ev.preventDefault(); openEntry('out'); amount.value = ev.key; updatePreview(); }
   if (ev.key === 'ArrowLeft') $('prev').click();
   if (ev.key === 'ArrowRight') $('next').click();
 });
@@ -1484,7 +1613,7 @@ const cloud = (() => {
       state: () => sync.bilanz ||= { cursor: null, synced: {} },
       items: bilanzItems,
       set: bilanzSet,
-      persist() { try { localStorage.setItem(BILANZ_KEY, JSON.stringify(bilanz)); } catch {} if ($('bilanz').open) renderBilanz(); },
+      persist() { try { localStorage.setItem(BILANZ_KEY, JSON.stringify(bilanz)); } catch {} if ($('bilanz').open) renderBilanz(); renderDue(); },
     },
   ];
 
@@ -1988,7 +2117,7 @@ let bConfirm = null;
 let bRange = 'year';
 
 function normBilanz(b) {
-  return { accounts: (b?.accounts || []).map(a => ({ id: a.id, name: a.name, kind: a.kind, ...(a.closed ? { closed: a.closed } : {}) })), values: { ...b?.values } };
+  return { accounts: (b?.accounts || []).map(a => ({ id: a.id, name: a.name, kind: a.kind, ...(a.closed ? { closed: a.closed } : {}) })), values: { ...b?.values }, done: { ...b?.done } };
 }
 function loadBilanz() {
   try { return normBilanz(JSON.parse(localStorage.getItem(BILANZ_KEY))); } catch { return normBilanz(); }
@@ -1996,11 +2125,13 @@ function loadBilanz() {
 function saveBilanz() {
   try { localStorage.setItem(BILANZ_KEY, JSON.stringify(bilanz)); } catch {}
   cloud.schedule();
+  renderDue();
 }
 
-// Für den Sync als flache Liste: "a:<konto>" = Konto, "v:<YYYY-MM>:<konto>" = Stand
+// Für den Sync als flache Liste: "a:<konto>" = Konto, "v:<YYYY-MM>:<konto>" = Stand, "d:<YYYY-MM>" = Bilanz abgehakt
 function bilanzItems() {
   const items = new Map();
+  for (const k of Object.keys(bilanz.done)) items.set('d:' + k, true);
   for (const a of bilanz.accounts) items.set('a:' + a.id, a.closed ? { name: a.name, kind: a.kind, closed: a.closed } : { name: a.name, kind: a.kind });
   for (const [k, vals] of Object.entries(bilanz.values)) for (const [id, v] of Object.entries(vals)) items.set(`v:${k}:${id}`, v);
   return items;
@@ -2009,6 +2140,11 @@ function bilanzItems() {
 // Ein Element vom Server übernehmen (null = gelöscht); gibt den neuen lokalen Stand zurück
 function bilanzSet(key, data) {
   const [t, a, b] = key.split(':');
+  if (t === 'd') {
+    if (data == null) { delete bilanz.done[a]; return; }
+    bilanz.done[a] = true;
+    return true;
+  }
   if (t === 'a') {
     const acc = bilanz.accounts.find(x => x.id === a);
     if (data == null) { bilanz.accounts = bilanz.accounts.filter(x => x.id !== a); return; }
@@ -2077,7 +2213,56 @@ function renderBilanz(slide) {
       <form class="badd" data-kind="${kind}"><input placeholder="+ ${add}" maxlength="40"></form>
     </div>`).join('');
   renderBilanzSums(true);
+  renderDue();
 }
+
+/* Erinnerung: ab dem Ersten jedes Monats ist die Bilanz fällig, bis sie abgehakt ist.
+   Nur wer überhaupt Konten in der Bilanz hat, wird erinnert. */
+const dueKey = () => { const d = new Date(); return mkey(d.getFullYear(), d.getMonth()); };
+const isDue = () => bilanz.accounts.length > 0 && !bilanz.done[dueKey()];
+const monthName = k => new Intl.DateTimeFormat('de-DE', { month: 'long' }).format(new Date(+k.slice(0, 4), +k.slice(5) - 1, 1));
+
+function renderDue() {
+  const due = isDue(), k = dueKey(), el = $('due');
+  if (due) {
+    $('dueTitle').textContent = `Bilanz für ${monthName(k)} ist fällig`;
+    if (el.hidden) { el.classList.remove('bye'); el.style.height = ''; el.hidden = false; }
+  } else if (!el.hidden && !el.classList.contains('bye')) el.hidden = true;
+  $('bilanzBtn').classList.toggle('badge', due);
+  const here = $('bilanz').open && mkey(bView.getFullYear(), bView.getMonth()) === k;
+  $('bDone').hidden = !(due && here);
+  $('bDone').querySelector('span').textContent = `Bilanz für ${monthName(k)} abhaken`;
+  try { due ? navigator.setAppBadge?.(1) : navigator.clearAppBadge?.(); } catch {}
+}
+
+function markDone() {
+  const k = dueKey(), el = $('due');
+  bilanz.done[k] = true;
+  sound.play('in');
+  // Karte zusammenfalten, danach ausblenden
+  if (!el.hidden && !reduced.matches) {
+    el.style.height = el.offsetHeight + 'px';
+    void el.offsetHeight;
+    el.classList.add('bye');
+    setTimeout(() => { el.hidden = true; el.classList.remove('bye'); el.style.height = ''; }, 300);
+  }
+  saveBilanz();
+  toast(`Bilanz für ${monthName(k)} abgehakt`, () => { delete bilanz.done[k]; sound.play('undo'); saveBilanz(); });
+}
+
+function openBilanz(month) {
+  bView = new Date(month.getFullYear(), month.getMonth(), 1);
+  bConfirm = null;
+  $('bNet')._v = 0; // beim Öffnen von 0 hochzählen
+  openDialog($('bilanz'));
+  renderBilanz();
+}
+
+$('dueCheck').addEventListener('click', markDone);
+$('bDone').addEventListener('click', markDone);
+$('dueGo').addEventListener('click', () => openBilanz(new Date()));
+// Monatswechsel, während die App offen bleibt
+document.addEventListener('visibilitychange', () => { if (!document.hidden) renderDue(); });
 
 // Alles, was sich beim Eintippen eines Wertes ändert (ohne die Felder neu zu zeichnen)
 function renderBilanzSums(animate) {
@@ -2203,13 +2388,7 @@ function bilanzMonth(delta) {
   renderBilanz(delta > 0 ? 'next' : 'prev');
 }
 
-$('bilanzBtn').addEventListener('click', () => {
-  bView = new Date(view.getFullYear(), view.getMonth(), 1);
-  bConfirm = null;
-  $('bNet')._v = 0; // beim Öffnen von 0 hochzählen
-  openDialog($('bilanz'));
-  renderBilanz();
-});
+$('bilanzBtn').addEventListener('click', () => openBilanz(isDue() ? new Date() : view));
 $('bPrev').addEventListener('click', () => bilanzMonth(-1));
 $('bNext').addEventListener('click', () => bilanzMonth(1));
 $('bYPrev').addEventListener('click', () => bilanzMonth(-12));
@@ -2352,12 +2531,13 @@ document.querySelectorAll('dialog').forEach(d => {
 resetForm();
 render();
 renderTheme();
+renderDue();
 // Sprung aus einer Verknüpfung am App-Symbol (langes Drücken, siehe shortcuts im Manifest)
 const jump = new URLSearchParams(location.search);
 if (jump.has('neu') || jump.has('zeige')) {
   history.replaceState(null, '', location.pathname);
   const neu = { ausgabe: 'out', einnahme: 'in' }[jump.get('neu')];
-  if (neu) { setType(neu); $('amount').focus(); }
+  if (neu) openEntry(neu);
   const btn = { notizen: 'notesBtn', analyse: 'analysisBtn', bilanz: 'bilanzBtn' }[jump.get('zeige')];
   if (btn) $(btn).click();
 }
