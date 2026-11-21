@@ -24,7 +24,7 @@
   :root {
     color-scheme: light;
     /* Flächen: Seite, Container-Stufen, verschachtelt */
-    --bg: #ffffff; --surface: #f7f7f7; --sc: #f2f2f2; --c-high: #e9e9e9; --nest: #ffffff; --pressed: #dcdcdc; --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%235c5c5c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    --bg: #ffffff; --surface: #f7f7f7; --sc: #f2f2f2; --c-high: #e9e9e9; --nest: #ffffff; --pressed: #dcdcdc; --lupe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='6.5' fill='none' stroke='%235c5c5c' stroke-width='2'/%3E%3Cpath d='M16 16l4.5 4.5' stroke='%235c5c5c' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%235c5c5c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --text: #111111; --muted: #5c5c5c; --line: #e3e3e3; --accent: #111111;
     --tert: #0b57d0; --on-tert: #ffffff; --tert-c: #d3e3fd; --on-tert-c: #041e49;
     --in: #0b7d50; --out: #c9353a; --in-bg: #dff2e6; --out-bg: #fbe5e3; --in-line: #b6dfc6; --out-line: #f0c6c1;
@@ -39,7 +39,7 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --bg: #0e0e0e; --surface: #1b1b1b; --sc: #1b1b1b; --c-high: #2b2b2b; --nest: #262626; --pressed: #3a3a3a; --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%23a8a8a8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      --bg: #0e0e0e; --surface: #1b1b1b; --sc: #1b1b1b; --c-high: #2b2b2b; --nest: #262626; --pressed: #3a3a3a; --lupe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='6.5' fill='none' stroke='%23a8a8a8' stroke-width='2'/%3E%3Cpath d='M16 16l4.5 4.5' stroke='%23a8a8a8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%23a8a8a8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       --text: #ededed; --muted: #a8a8a8; --line: #2e2e2e; --accent: #f2f2f2;
       --tert: #a8c7fa; --on-tert: #062e6f; --tert-c: #0842a0; --on-tert-c: #d3e3fd;
       --in: #3ccb8f; --out: #f2716b; --in-bg: #0f2a1e; --out-bg: #341918; --in-line: #1c4f38; --out-line: #6a2b28;
@@ -50,7 +50,7 @@
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #0e0e0e; --surface: #1b1b1b; --sc: #1b1b1b; --c-high: #2b2b2b; --nest: #262626; --pressed: #3a3a3a; --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%23a8a8a8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    --bg: #0e0e0e; --surface: #1b1b1b; --sc: #1b1b1b; --c-high: #2b2b2b; --nest: #262626; --pressed: #3a3a3a; --lupe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='6.5' fill='none' stroke='%23a8a8a8' stroke-width='2'/%3E%3Cpath d='M16 16l4.5 4.5' stroke='%23a8a8a8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%23a8a8a8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --text: #ededed; --muted: #a8a8a8; --line: #2e2e2e; --accent: #f2f2f2;
     --tert: #a8c7fa; --on-tert: #062e6f; --tert-c: #0842a0; --on-tert-c: #d3e3fd;
     --in: #3ccb8f; --out: #f2716b; --in-bg: #0f2a1e; --out-bg: #341918; --in-line: #1c4f38; --out-line: #6a2b28;
@@ -110,9 +110,20 @@
   .balance { white-space: nowrap; text-align: center; margin: var(--space-3) 0 var(--space-1); font-size: 52px; line-height: 1.1; font-weight: 650; letter-spacing: -.035em; font-variant-numeric: tabular-nums; transition: color .23s var(--fx); }
   .balance.pos { color: var(--in); }
   .balance.neg { color: var(--out); }
-  .split { display: flex; justify-content: center; gap: var(--space-1); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .split > span { background: var(--sc); border-radius: 999px; padding: 6px 14px; }
-  .split b { font-weight: 600; font-size: 13px; margin-left: 4px; }
+  /* Saldo-Karte: hebt sich vom Verlauf ab, getönt nach Vorzeichen (Plus grün, Minus rot) */
+  .hero { margin-top: var(--space-2); padding: var(--space-1) var(--space-2) var(--space-2); border-radius: var(--r-lg); background: var(--sc); transition: background .23s var(--fx); }
+  .hero[data-sign="pos"] { background: var(--in-bg); }
+  .hero[data-sign="neg"] { background: var(--out-bg); }
+  .hero .month { margin-top: 0; }
+  .hero-label { display: block; text-align: center; margin-top: var(--space-1); font-size: 13px; font-weight: 600; color: var(--muted); }
+  .hero .balance { margin: 0 0 var(--space-2); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1); }
+  .stat { position: relative; display: grid; gap: 2px; text-align: left; padding: 12px 16px; border-radius: var(--radius); background: var(--nest); font-variant-numeric: tabular-nums;
+    transition: background .15s var(--fx), transform .36s var(--spring), border-radius .36s var(--spring); }
+  .stat span { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .stat b { font-size: 19px; font-weight: 650; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat i { position: absolute; right: 14px; top: 10px; font-style: normal; font-size: 18px; line-height: 1; color: var(--muted); }
+  .stat:active { transform: scale(.97); border-radius: 14px; transition-duration: .1s; transition-timing-function: var(--fx); }
   #sumIn { color: var(--in); }
   #sumOut { color: var(--out); }
 
@@ -446,6 +457,31 @@
   #bilanzBtn.badge::before { content: ''; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; border-radius: 50%; background: var(--tert); box-shadow: 0 0 0 2px var(--bg); }
   .btn.done { justify-self: stretch; justify-content: center; gap: var(--space-1); min-height: 48px; background: var(--tert-c); color: var(--on-tert-c); font-weight: 650; }
 
+  /* Suche: Feld und Filter bleiben beim Scrollen unter dem Titel stehen */
+  #search { width: min(560px, calc(100% - 32px)); margin: max(16px, env(safe-area-inset-top)) auto auto; } /* oben verankert: springt nicht, wenn sich die Trefferzahl ändert */
+  .search-bar { position: sticky; top: var(--head-h); z-index: 2; display: grid; gap: var(--space-1); padding-bottom: var(--space-1); background: var(--surface); }
+  .search-bar .field { padding-left: 40px; background-image: var(--lupe); background-repeat: no-repeat; background-position: 14px center; background-size: 16px 16px; }
+  .search-bar .hint:empty { display: none; }
+  .sres { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px var(--space-2); width: 100%; text-align: left; padding: 10px 16px; margin-top: 2px; background: var(--nest); border-radius: 4px; transition: background .15s var(--fx), transform .36s var(--spring); }
+  .sres:first-child { margin-top: 0; border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+  .sres:last-child, .sres:has(+ .hint) { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
+  .sres:active { background: var(--pressed); transform: scale(.985); transition-duration: .1s; transition-timing-function: var(--fx); }
+  .sres .cat { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sres .val { grid-row: span 2; }
+  .sres small { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sres.future { opacity: .55; }
+  .sres mark { background: var(--tert-c); color: var(--on-tert-c); border-radius: 3px; padding: 0 1px; }
+  #searchList > .hint { text-align: center; padding: var(--space-2) 0; }
+
+  /* Einnahmen/Ausgaben im Zeitraum */
+  #flow { width: min(560px, calc(100% - 32px)); margin: max(16px, env(safe-area-inset-top)) auto auto; }
+  #flow .balance { margin: 4px 0 0; font-size: 44px; }
+  #flow[data-type="in"] .balance { color: var(--in); }
+  #flow[data-type="out"] .balance { color: var(--out); }
+  .flow-meta { text-align: center; min-height: 20px; }
+  .crow.static { cursor: default; }
+  #flowList > .hint { text-align: center; padding: var(--space-2) 0; }
+
   /* Hover nur mit Maus: auf dem Handy bliebe der Zustand nach dem Antippen sonst hängen */
   @media (hover: hover) {
     .icon:hover { background: var(--c-high); color: var(--text); }
@@ -458,6 +494,8 @@
     .toast button:hover { background: rgb(127 127 127 / .2); }
     .btn.primary:hover { filter: brightness(1.15); background: var(--accent); }
     .snap button:hover { background: var(--nest); }
+    .sres:hover { background: var(--c-high); }
+    .stat:hover { filter: brightness(.97); }
   }
 </style>
 </head>
@@ -465,6 +503,9 @@
 <main>
   <div class="top">
     <span class="spacer"></span>
+    <button class="icon" id="searchBtn" aria-label="Suchen">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+    </button>
     <button class="icon" id="notesBtn" aria-label="Notizen">
       <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>
     </button>
@@ -474,7 +515,6 @@
     <button class="icon" id="bilanzBtn" aria-label="Bilanz">
       <svg viewBox="0 0 24 24"><path d="M12 4v16M8 20h8M5 7h14M5 7l-2.5 6a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z"/></svg>
     </button>
-    <button class="icon" id="themeBtn" aria-label="Hell / Dunkel"></button>
     <button class="icon" id="settingsBtn" aria-label="Einstellungen">
       <svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
     </button>
@@ -494,16 +534,17 @@
     </div>
   </section>
 
-  <header>
+  <header class="hero" id="hero">
     <div class="month">
       <button class="icon" id="prev" aria-label="Vorheriger Monat">‹</button>
       <span id="monthLabel"></span>
       <button class="icon" id="next" aria-label="Nächster Monat">›</button>
     </div>
+    <span class="hero-label">Saldo</span>
     <div class="balance" id="balance">0,00 €</div>
     <div class="split">
-      <span>Einnahmen <b id="sumIn">0,00 €</b></span>
-      <span>Ausgaben <b id="sumOut">0,00 €</b></span>
+      <button type="button" class="stat in" data-flow="in"><span>Einnahmen</span><b id="sumIn">0,00 €</b><i aria-hidden="true">›</i></button>
+      <button type="button" class="stat out" data-flow="out"><span>Ausgaben</span><b id="sumOut">0,00 €</b><i aria-hidden="true">›</i></button>
     </div>
   </header>
 
@@ -599,6 +640,52 @@
     </div>
     <textarea class="notes" id="notesText" placeholder="Gedanken, Pläne, Merkzettel …" aria-label="Notizen"></textarea>
     <p class="hint">Speichert automatisch</p>
+  </div>
+</dialog>
+
+<dialog id="search">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2>Suche</h2>
+      <button class="icon" data-close aria-label="Schließen">✕</button>
+    </div>
+    <div class="search-bar">
+      <input class="field" id="searchQ" type="search" enterkeyhint="search" autocomplete="off" placeholder="Kategorie, Bemerkung, Betrag, Datum" aria-label="Suchbegriff">
+      <div class="seg" id="searchSeg">
+        <button type="button" data-st="">Alle</button>
+        <button type="button" data-st="out">Ausgaben</button>
+        <button type="button" data-st="in">Einnahmen</button>
+      </div>
+      <p class="hint" id="searchSum"></p>
+    </div>
+    <div id="searchList"></div>
+  </div>
+</dialog>
+
+<dialog id="flow">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2 id="flowTitle">Ausgaben</h2>
+      <button class="icon" data-close aria-label="Schließen">✕</button>
+    </div>
+    <div class="seg" id="flowSeg">
+      <button type="button" data-fp="month">Monat</button>
+      <button type="button" data-fp="quarter">Quartal</button>
+      <button type="button" data-fp="year">Jahr</button>
+    </div>
+    <div class="month">
+      <button class="icon" id="fPrev" aria-label="Zurück">‹</button>
+      <span id="flowLabel"></span>
+      <button class="icon" id="fNext" aria-label="Weiter">›</button>
+    </div>
+    <div id="flowBody" style="display:grid;gap:8px">
+      <div class="balance" id="flowTotal">0,00 €</div>
+      <p class="hint flow-meta" id="flowMeta"></p>
+      <h3 id="flowCatHead">Nach Kategorie</h3>
+      <div id="flowCats"></div>
+      <h3 id="flowListHead">Buchungen</h3>
+      <div id="flowList"></div>
+    </div>
   </div>
 </dialog>
 
@@ -768,8 +855,6 @@ const dayFmt = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric
 const shortFmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 const stampFmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-const ICON_MOON = '<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
-const ICON_SUN = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
 
 let state = load();
 const loadNotes = () => { try { return localStorage.getItem(NOTES_KEY) || ''; } catch { return ''; } };
@@ -1083,6 +1168,8 @@ function syncRepeatUI() {
 /* ---------- Anzeige ---------- */
 
 function render(slide) {
+  if ($('search').open) renderSearch();
+  if ($('flow').open) renderFlow();
   const y = view.getFullYear(), m = view.getMonth();
   $('monthLabel').textContent = monthFmt.format(view);
   if (slide) { replay($('monthLabel'), 'slide-' + slide); replay($('list'), 'slide-' + slide); }
@@ -1096,6 +1183,7 @@ function render(slide) {
   const bal = sumIn - sumOut;
   tween($('balance'), bal);
   $('balance').className = 'balance' + (bal > 0.004 ? ' pos' : bal < -0.004 ? ' neg' : '');
+  $('hero').dataset.sign = bal > 0.004 ? 'pos' : bal < -0.004 ? 'neg' : '';
   tween($('sumIn'), sumIn);
   tween($('sumOut'), sumOut);
 
@@ -1335,7 +1423,8 @@ document.addEventListener('keydown', ev => {
   if (ev.target.matches('input, select, textarea') || document.querySelector('dialog[open]')) return;
   if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
   // Am Rechner direkt lostippen: Ziffer oder − öffnet eine Ausgabe, + eine Einnahme
-  if (ev.key === '+') { ev.preventDefault(); openEntry('in'); }
+  if (ev.key === '/') { ev.preventDefault(); openSearch(); }
+  else if (ev.key === '+') { ev.preventDefault(); openEntry('in'); }
   else if (ev.key === '-') { ev.preventDefault(); openEntry('out'); }
   else if (/^[0-9]$/.test(ev.key)) { ev.preventDefault(); openEntry('out'); amount.value = ev.key; updatePreview(); }
   if (ev.key === 'ArrowLeft') $('prev').click();
@@ -1368,30 +1457,29 @@ function setTheme(t) {
 }
 
 function renderTheme() {
-  $('themeBtn').innerHTML = isDark() ? ICON_SUN : ICON_MOON;
   const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
   document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.content = bg; });
   const cur = document.documentElement.dataset.theme || '';
   press($('themeSeg'), b => b.dataset.themeSet === cur);
 }
 
-// Wechsel Hell/Dunkel als Kreis, der sich vom Knopf aus ausbreitet
-$('themeBtn').addEventListener('click', () => {
-  const next = isDark() ? 'light' : 'dark';
-  sound.play('toggle');
-  if (!document.startViewTransition || reduced.matches || document.hidden) return setTheme(next);
-  const r = $('themeBtn').getBoundingClientRect();
+// Wechsel Hell/Dunkel als Kreis, der sich vom angetippten Schalter aus ausbreitet
+function switchTheme(next, from) {
+  const before = isDark();
+  const root = document.documentElement;
+  const after = next ? next === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  if (before === after || !document.startViewTransition || reduced.matches || document.hidden) return setTheme(next);
+  const r = from.getBoundingClientRect();
   const x = r.left + r.width / 2, y = r.top + r.height / 2;
   const rad = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-  const root = document.documentElement;
   const vt = document.startViewTransition(() => { root.classList.add('no-tr'); setTheme(next); });
   vt.ready.then(() => root.animate(
     { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${rad}px at ${x}px ${y}px)`] },
     { duration: 600, easing: getComputedStyle(root).getPropertyValue('--m3e-default-spatial').trim() || 'ease-out', pseudoElement: '::view-transition-new(root)' }
   ));
   vt.finished.finally(() => root.classList.remove('no-tr'));
-});
-$('themeSeg').addEventListener('click', ev => { const b = ev.target.closest('[data-theme-set]'); if (b) { sound.play('tap'); setTheme(b.dataset.themeSet); } });
+}
+$('themeSeg').addEventListener('click', ev => { const b = ev.target.closest('[data-theme-set]'); if (b) { sound.play('toggle'); switchTheme(b.dataset.themeSet, b); } });
 
 function renderSound() { press($('soundSeg'), b => (b.dataset.sound === 'on') === sound.enabled); }
 $('soundSeg').addEventListener('click', ev => {
@@ -2514,6 +2602,187 @@ $('notesBtn').addEventListener('click', () => {
   if (!matchMedia('(pointer: coarse)').matches) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
 });
 $('notesText').addEventListener('input', ev => setNotes(ev.target.value));
+
+/* ---------- Einnahmen / Ausgaben im Zeitraum ---------- */
+
+// Antippen der Einnahmen- oder Ausgaben-Kachel: alle Buchungen dieses Typs in Monat, Quartal oder Jahr,
+// mit Summe, Aufteilung nach Kategorie und Liste. Zeiträume enden mit dem laufenden Monat.
+let flowType = 'out', flowPeriod = 'month', flowRef = new Date(view);
+const QFMT = new Intl.DateTimeFormat('de-DE', { month: 'short' });
+
+// Monate [Jahr, Monat] des Zeitraums, der flowRef enthält (nicht über den laufenden Monat hinaus)
+function flowMonths() {
+  const y = flowRef.getFullYear(), m = flowRef.getMonth();
+  const start = flowPeriod === 'month' ? m : flowPeriod === 'quarter' ? m - m % 3 : 0;
+  const len = flowPeriod === 'month' ? 1 : flowPeriod === 'quarter' ? 3 : 12;
+  const now = new Date(), last = now.getFullYear() * 12 + now.getMonth();
+  const out = [];
+  for (let i = start; i < start + len; i++) if (y * 12 + i <= last) out.push([y, i]);
+  return out;
+}
+
+function flowLabel() {
+  const y = flowRef.getFullYear(), m = flowRef.getMonth();
+  if (flowPeriod === 'month') return monthFmt.format(flowRef);
+  if (flowPeriod === 'year') return String(y);
+  const q = Math.floor(m / 3);
+  return `${q + 1}. Quartal ${y} · ${QFMT.format(new Date(y, q * 3, 1)).replace('.', '')}–${QFMT.format(new Date(y, q * 3 + 2, 1)).replace('.', '')}`;
+}
+
+function renderFlow(slide) {
+  const t = flowType, months = flowMonths();
+  $('flowTitle').textContent = t === 'in' ? 'Einnahmen' : 'Ausgaben';
+  $('flow').dataset.type = t;
+  press($('flowSeg'), b => b.dataset.fp === flowPeriod);
+  $('flowLabel').textContent = flowLabel();
+  if (slide) { replay($('flowLabel'), 'slide-' + slide); replay($('flowBody'), 'slide-' + slide); }
+
+  // Nächster Zeitraum erst, wenn er schon begonnen hat; zurück bis zum ersten Eintrag
+  const step = flowPeriod === 'month' ? 1 : flowPeriod === 'quarter' ? 3 : 12;
+  const now = new Date();
+  const nextStart = new Date(flowRef.getFullYear(), (flowPeriod === 'year' ? 0 : flowRef.getMonth() - flowRef.getMonth() % step) + step, 1);
+  $('fNext').disabled = nextStart > now;
+  const first = state.entries.reduce((min, e) => e.date < min ? e.date : min, iso(now));
+  const [fy, fm] = months.length ? months[0] : [flowRef.getFullYear(), flowRef.getMonth()];
+  $('fPrev').disabled = mkey(fy, fm) <= first.slice(0, 7);
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const entries = state.entries.filter(e => e.type === t);
+  const rows = months
+    .flatMap(([y, m]) => entries.flatMap(e => occurrencesIn(e, y, m).map(on => ({ e, on }))))
+    .sort((a, b) => b.on - a.on || b.e.created - a.e.created);
+  const total = rows.reduce((s, r) => s + r.e.amount, 0);
+  tween($('flowTotal'), total);
+  const avg = months.length > 1 ? ` · Ø ${eur.format(total / months.length)} pro Monat` : '';
+  $('flowMeta').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? 'Buchung' : 'Buchungen'}${avg}` : '';
+
+  if (!rows.length) {
+    $('flowCats').innerHTML = '';
+    $('flowList').innerHTML = `<p class="hint">Keine ${t === 'in' ? 'Einnahmen' : 'Ausgaben'} in diesem Zeitraum.</p>`;
+    $('flowCatHead').hidden = $('flowListHead').hidden = true;
+    return;
+  }
+  $('flowCatHead').hidden = $('flowListHead').hidden = false;
+
+  const byCat = new Map();
+  for (const { e } of rows) { const k = e.category || 'Ohne Kategorie'; byCat.set(k, (byCat.get(k) || 0) + e.amount); }
+  const cats = [...byCat].sort((a, b) => b[1] - a[1]), max = cats[0][1];
+  $('flowCats').innerHTML = cats.map(([k, v]) => `
+    <div class="crow static">
+      <span class="cname">${esc(k)}</span>
+      <span class="cval">${eur.format(v)}<small>${Math.round(v / total * 100)} %</small></span>
+      <span class="cbar"><i style="width:${(v / max * 100).toFixed(1)}%;background:var(--${t}-chart)"></i></span>
+    </div>`).join('');
+
+  const MAX = 300;
+  $('flowList').innerHTML = rows.slice(0, MAX).map(({ e, on }) => `
+    <button type="button" class="sres${on > today ? ' future' : ''}" data-id="${e.id}">
+      <span class="cat">${esc(e.category || (t === 'in' ? 'Einnahme' : 'Ausgabe'))}${e.repeat ? `<span class="rep">↻ ${repeatText(e.repeat)}</span>` : ''}</span>
+      <span class="val ${t}">${t === 'in' ? '+' : '−'}${eur.format(e.amount)}</span>
+      <small>${shortFmt.format(on)}${e.note ? ' · ' + esc(e.note) : ''}</small>
+    </button>`).join('') + (rows.length > MAX ? `<p class="hint">… und ${rows.length - MAX} weitere</p>` : '');
+}
+
+function openFlow(t) {
+  flowType = t;
+  flowRef = new Date(view);
+  $('flowTotal')._v = 0; // beim Öffnen von 0 hochzählen
+  openDialog($('flow'));
+  renderFlow();
+}
+
+function flowStep(dir) {
+  const step = flowPeriod === 'month' ? 1 : flowPeriod === 'quarter' ? 3 : 12;
+  flowRef = new Date(flowRef.getFullYear(), flowRef.getMonth() + dir * step, 1);
+  sound.play('swipe');
+  renderFlow(dir > 0 ? 'next' : 'prev');
+}
+
+document.querySelector('.split').addEventListener('click', ev => { const b = ev.target.closest('[data-flow]'); if (b) openFlow(b.dataset.flow); });
+$('flowSeg').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-fp]');
+  if (!b || b.dataset.fp === flowPeriod) return;
+  sound.play('tap');
+  flowPeriod = b.dataset.fp;
+  renderFlow();
+});
+$('fPrev').addEventListener('click', () => flowStep(-1));
+$('fNext').addEventListener('click', () => flowStep(1));
+$('flowList').addEventListener('click', ev => { const r = ev.target.closest('.sres'); if (r) openEntry(null, r.dataset.id); });
+
+/* ---------- Suche ---------- */
+
+// Durchsucht alle Einträge (Kategorie, Bemerkung, Betrag, Datum). Mehrere Wörter müssen alle vorkommen,
+// Groß-/Kleinschreibung und Akzente zählen nicht. Serien erscheinen einmal (mit Startdatum).
+let searchType = '';
+const fold = s => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+const SEARCH_MAX = 200;
+
+function mark(text, words) {
+  if (!text) return '';
+  const f = fold(text);
+  if (f.length !== text.length) return esc(text); // Hervorheben nur, wenn die Positionen übereinstimmen
+  const hit = new Array(text.length).fill(false);
+  for (const w of words) for (let i = f.indexOf(w); i >= 0; i = f.indexOf(w, i + 1)) hit.fill(true, i, i + w.length);
+  let out = '', open = false;
+  for (let i = 0; i < text.length; i++) {
+    if (hit[i] !== open) { out += hit[i] ? '<mark>' : '</mark>'; open = hit[i]; }
+    out += esc(text[i]);
+  }
+  return out + (open ? '</mark>' : '');
+}
+
+function renderSearch() {
+  const q = $('searchQ').value.trim();
+  press($('searchSeg'), b => b.dataset.st === searchType);
+  const words = fold(q).split(/\s+/).filter(Boolean);
+  if (!words.length) {
+    $('searchSum').textContent = '';
+    $('searchList').innerHTML = '<p class="hint">Suche in Kategorien, Bemerkungen, Beträgen und Daten.</p>';
+    return;
+  }
+  const hits = state.entries.filter(e => {
+    if (searchType && e.type !== searchType) return false;
+    const hay = fold([e.category, e.note, money(e.amount), money(e.amount).replace(/\./g, ''), shortFmt.format(parseISO(e.date))].join(' '));
+    return words.every(w => hay.includes(w));
+  }).sort((a, b) => b.date.localeCompare(a.date) || b.created - a.created);
+
+  let sIn = 0, sOut = 0;
+  for (const e of hits) e.type === 'in' ? sIn += e.amount : sOut += e.amount;
+  const series = hits.some(e => e.repeat);
+  $('searchSum').textContent = hits.length
+    ? hits.length + ' Treffer' + (sOut ? ' · Ausgaben ' + eur.format(sOut) : '') + (sIn ? ' · Einnahmen ' + eur.format(sIn) : '') + (series ? ' · Serien einmal gezählt' : '')
+    : '';
+  const today = iso(new Date());
+  $('searchList').innerHTML = hits.length
+    ? hits.slice(0, SEARCH_MAX).map(e => `
+      <button type="button" class="sres${e.date > today ? ' future' : ''}" data-id="${e.id}">
+        <span class="cat">${mark(e.category || (e.type === 'in' ? 'Einnahme' : 'Ausgabe'), words)}${e.repeat ? `<span class="rep">↻ ${repeatText(e.repeat)}</span>` : ''}</span>
+        <span class="val ${e.type}">${e.type === 'in' ? '+' : '−'}${mark(eur.format(e.amount), words)}</span>
+        <small>${mark(shortFmt.format(parseISO(e.date)), words)}${e.note ? ' · ' + mark(e.note, words) : ''}</small>
+      </button>`).join('') + (hits.length > SEARCH_MAX ? `<p class="hint">… und ${hits.length - SEARCH_MAX} weitere. Genauer suchen, um sie zu sehen.</p>` : '')
+    : '<p class="hint">Nichts gefunden.</p>';
+}
+
+function openSearch() {
+  if ($('search').open) return $('searchQ').focus();
+  openDialog($('search'));
+  renderSearch();
+  $('searchQ').focus();
+  $('searchQ').select();
+}
+
+$('searchBtn').addEventListener('click', openSearch);
+$('searchQ').addEventListener('input', renderSearch);
+$('searchQ').addEventListener('keydown', ev => { if (ev.key === 'Enter') ev.target.blur(); }); // Handytastatur einklappen
+$('searchSeg').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-st]');
+  if (!b || b.dataset.st === searchType) return;
+  sound.play('tap');
+  searchType = b.dataset.st;
+  renderSearch();
+});
+$('searchList').addEventListener('click', ev => { const r = ev.target.closest('.sres'); if (r) openEntry(null, r.dataset.id); });
 
 /* ---------- Einstellungen ---------- */
 
